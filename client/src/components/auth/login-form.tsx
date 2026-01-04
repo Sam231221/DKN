@@ -1,47 +1,56 @@
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
-import { AlertCircle, Loader2 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { authenticateUser } from "@/lib/dummy-users"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { login, type LoginData } from "@/lib/api";
 
 export function LoginForm() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800))
+      const loginData: LoginData = {
+        email,
+        password,
+      };
 
-      const user = authenticateUser(email, password)
+      const response = await login(loginData);
 
-      if (!user) {
-        setError("Invalid email or password")
-        setLoading(false)
-        return
-      }
+      // Store user data and token
+      localStorage.setItem("dkn_token", response.token);
+      localStorage.setItem(
+        "dkn_user",
+        JSON.stringify({
+          id: response.user.id,
+          email: response.user.email,
+          name: response.user.name,
+          firstName: response.user.firstName,
+          lastName: response.user.lastName,
+          role: response.user.role,
+          avatar: response.user.avatar,
+          interests: response.user.interests,
+        })
+      );
 
-      // Store authenticated user data
-      localStorage.setItem("dkn_user", JSON.stringify(user))
-
-      navigate("/dashboard")
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+      navigate("/explore");
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="p-8 bg-card border-border">
@@ -52,20 +61,6 @@ export function LoginForm() {
             <span>{error}</span>
           </div>
         )}
-
-        <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm text-primary">
-          <AlertCircle className="h-4 w-4 mt-0.5" />
-          <div>
-            <p className="font-medium">Demo Credentials:</p>
-            <p className="text-xs mt-1 space-y-0.5">
-              <span className="block">Admin: admin@velion.com / admin123</span>
-              <span className="block">Champion: champion@velion.com / champion123</span>
-              <span className="block">Employee: employee@velion.com / employee123</span>
-              <span className="block">Consultant: consultant@velion.com / consultant123</span>
-              <span className="block">Client: client@velion.com / client123</span>
-            </p>
-          </div>
-        </div>
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -118,7 +113,15 @@ export function LoginForm() {
           </div>
         </div>
 
-        <Button type="button" variant="outline" className="w-full bg-transparent">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full bg-background border-border hover:bg-muted/50"
+          onClick={() => {
+            // Google OAuth handler - to be connected to backend
+            window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api/auth/google`;
+          }}
+        >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -141,5 +144,5 @@ export function LoginForm() {
         </Button>
       </form>
     </Card>
-  )
+  );
 }

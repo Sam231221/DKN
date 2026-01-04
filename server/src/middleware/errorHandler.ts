@@ -13,18 +13,34 @@ export class AppError extends Error {
 }
 
 export const errorHandler = (
-  err: AppError,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  // Log error for debugging
+  console.error("Error:", err);
+
+  // If it's already an AppError, use its properties
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    });
+  }
+
+  // Handle other errors
   const statusCode = err.statusCode || 500;
   const status = err.status || "error";
 
   res.status(statusCode).json({
     status,
     message: err.message || "Internal Server Error",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(process.env.NODE_ENV === "development" && { 
+      stack: err.stack,
+      error: err 
+    }),
   });
 };
 

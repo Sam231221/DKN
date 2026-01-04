@@ -22,13 +22,13 @@ interface DailyDevSidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Repositories", href: "/dashboard/repositories", icon: FolderOpen },
-  { name: "Knowledge", href: "/dashboard/knowledge", icon: BookOpen },
-  { name: "Search", href: "/dashboard/search", icon: Search },
-  { name: "Trending", href: "/dashboard/trending", icon: TrendingUp },
-  { name: "Contributors", href: "/dashboard/contributors", icon: Users },
-  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Award },
+  { name: "Explore", href: "/explore", icon: LayoutDashboard },
+  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
+  { name: "Knowledge", href: "/explore/knowledge", icon: BookOpen },
+  { name: "Search", href: "/explore/search", icon: Search },
+  { name: "Trending", href: "/explore/trending", icon: TrendingUp },
+  { name: "Contributors", href: "/explore/contributors", icon: Users },
+  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
 ];
 
 export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
@@ -75,7 +75,7 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/dashboard/search")}
+            onClick={() => navigate("/explore/search")}
             className="h-9 w-9"
             title="Search"
           >
@@ -88,7 +88,7 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
       <div className={cn("p-4 border-b border-border", isCollapsed && "px-2")}>
         {isCollapsed ? (
           <Button
-            onClick={() => navigate("/dashboard/knowledge")}
+            onClick={() => navigate("/explore/knowledge")}
             variant="ghost"
             size="icon"
             className="w-full h-9"
@@ -98,7 +98,7 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
           </Button>
         ) : (
           <Button
-            onClick={() => navigate("/dashboard/knowledge")}
+            onClick={() => navigate("/explore/knowledge")}
             className="w-full justify-start"
             size="sm"
           >
@@ -133,14 +133,14 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
           );
         })}
         <Link
-          to="/dashboard/settings"
+          to="/explore/settings"
           title={isCollapsed ? "Settings" : undefined}
           className={cn(
             "flex items-center rounded-lg text-sm font-medium transition-colors",
             isCollapsed
               ? "justify-center px-2 py-2"
               : "gap-3 px-3 py-2",
-            location.pathname === "/dashboard/settings"
+            location.pathname === "/explore/settings"
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}

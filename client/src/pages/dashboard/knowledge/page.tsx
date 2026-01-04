@@ -11,6 +11,8 @@ export default function KnowledgePage() {
   const navigate = useNavigate()
   const [user, setUser] = useState<any>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [typeFilter, setTypeFilter] = useState<string | undefined>()
+  const [searchQuery, setSearchQuery] = useState<string>("")
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user")
@@ -37,8 +39,13 @@ export default function KnowledgePage() {
           </Button>
         </div>
 
-        <KnowledgeFilters />
-        <KnowledgeList />
+        <KnowledgeFilters 
+          type={typeFilter}
+          search={searchQuery}
+          onTypeChange={(value) => setTypeFilter(value)}
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
+        <KnowledgeList type={typeFilter} search={searchQuery} />
         <CreateKnowledgeDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
       </div>
     </DashboardLayout>

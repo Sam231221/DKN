@@ -10,10 +10,12 @@ import {
 
 export const knowledgeRoutes = Router();
 
-knowledgeRoutes.use(authenticate);
-
+// Public routes (no authentication required)
 knowledgeRoutes.get("/", getKnowledgeItems);
 knowledgeRoutes.get("/:id", getKnowledgeItemById);
+
+// Protected routes (authentication required)
+knowledgeRoutes.use(authenticate);
 knowledgeRoutes.post("/", createKnowledgeItem);
 knowledgeRoutes.patch("/:id", updateKnowledgeItem);
 knowledgeRoutes.delete("/:id", deleteKnowledgeItem);

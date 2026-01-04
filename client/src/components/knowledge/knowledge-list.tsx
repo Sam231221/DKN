@@ -1,81 +1,92 @@
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { FileText, Eye, Star, MessageSquare, MoreVertical, CheckCircle2 } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  FileText,
+  Eye,
+  Star,
+  MoreVertical,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import {
+  fetchKnowledgeItems,
+  getTypeDisplayName,
+  formatDate,
+  type KnowledgeItem,
+} from "@/lib/api";
 
-const knowledgeItems = [
-  {
-    id: 1,
-    title: "API Integration Best Practices",
-    description: "Comprehensive guide for integrating third-party APIs securely and efficiently",
-    category: "Documentation",
-    author: "Sarah Chen",
-    views: 342,
-    stars: 28,
-    comments: 12,
-    validated: true,
-    lastUpdated: "2 hours ago",
-    tags: ["API", "Security", "Integration"],
-  },
-  {
-    id: 2,
-    title: "Client Onboarding Checklist",
-    description: "Step-by-step process for onboarding new clients and ensuring smooth transitions",
-    category: "Guidelines",
-    author: "Michael Brown",
-    views: 521,
-    stars: 45,
-    comments: 18,
-    validated: true,
-    lastUpdated: "5 hours ago",
-    tags: ["Onboarding", "Client", "Process"],
-  },
-  {
-    id: 3,
-    title: "Security Incident Response Protocol",
-    description: "Detailed procedures for handling security incidents and data breaches",
-    category: "Security",
-    author: "Emily Davis",
-    views: 289,
-    stars: 34,
-    comments: 8,
-    validated: true,
-    lastUpdated: "1 day ago",
-    tags: ["Security", "Protocol", "Emergency"],
-  },
-  {
-    id: 4,
-    title: "React Component Library Guidelines",
-    description: "Standards and best practices for building reusable React components",
-    category: "Documentation",
-    author: "James Wilson",
-    views: 412,
-    stars: 52,
-    comments: 24,
-    validated: true,
-    lastUpdated: "2 days ago",
-    tags: ["React", "Components", "Frontend"],
-  },
-  {
-    id: 5,
-    title: "Database Migration Strategy",
-    description: "Guide for planning and executing database schema migrations safely",
-    category: "Technical",
-    author: "Lisa Anderson",
-    views: 198,
-    stars: 19,
-    comments: 6,
-    validated: false,
-    lastUpdated: "3 days ago",
-    tags: ["Database", "Migration", "Backend"],
-  },
-]
+interface KnowledgeListProps {
+  type?: string;
+  status?: string;
+  search?: string;
+}
 
-export function KnowledgeList() {
+export function KnowledgeList({ type, status, search }: KnowledgeListProps) {
+  const [items, setItems] = useState<KnowledgeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params: { type?: string; status?: string; search?: string } = {};
+        if (type) params.type = type;
+        if (status) params.status = status;
+        if (search && search.trim()) params.search = search.trim();
+        const data = await fetchKnowledgeItems(params);
+        setItems(data);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load knowledge items"
+        );
+        console.error("Error fetching knowledge items:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadItems();
+  }, [type, status, search]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">No knowledge items found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {knowledgeItems.map((item) => (
-        <Card key={item.id} className="p-6 bg-card border-border hover:border-primary/50 transition-colors">
+      {items.map((item) => (
+        <Card
+          key={item.id}
+          className="p-6 bg-card border-border hover:border-primary/50 transition-colors"
+        >
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-primary/10">
               <FileText className="h-5 w-5 text-primary" />
@@ -85,11 +96,16 @@ export function KnowledgeList() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-semibold">{item.title}</h3>
-                    {item.validated && (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" title="Validated by Knowledge Champion" />
+                    {item.status === "approved" && item.validatedBy && (
+                      <CheckCircle2
+                        className="h-4 w-4 text-green-500"
+                        title="Validated by Knowledge Champion"
+                      />
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description || "No description available"}
+                  </p>
                 </div>
                 <Button variant="ghost" size="icon" className="shrink-0">
                   <MoreVertical className="h-4 w-4" />
@@ -97,36 +113,34 @@ export function KnowledgeList() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-3">
-                {item.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
+                {item.tags && item.tags.length > 0
+                  ? item.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))
+                  : null}
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
                 <Badge variant="outline" className="text-xs">
-                  {item.category}
+                  {getTypeDisplayName(item.type)}
                 </Badge>
-                <span>by {item.author}</span>
+                {item.author && <span>by {item.author.name}</span>}
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
                   <span>{item.views}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4" />
-                  <span>{item.stars}</span>
+                  <span>{item.likes}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{item.comments}</span>
-                </div>
-                <span className="ml-auto">{item.lastUpdated}</span>
+                <span className="ml-auto">{formatDate(item.updatedAt)}</span>
               </div>
             </div>
           </div>
         </Card>
       ))}
     </div>
-  )
+  );
 }

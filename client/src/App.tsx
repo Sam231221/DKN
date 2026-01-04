@@ -9,6 +9,7 @@ import { Footer } from "@/components/footer";
 import LoginPage from "@/pages/login/page";
 import SignupPage from "@/pages/signup/page";
 import DashboardPage from "@/pages/dashboard/page";
+import ProfilePage from "@/pages/dashboard/profile/page";
 import SearchPage from "@/pages/dashboard/search/page";
 import LeaderboardPage from "@/pages/dashboard/leaderboard/page";
 import SettingsPage from "@/pages/dashboard/settings/page";
@@ -36,12 +37,13 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/dashboard/search" element={<SearchPage />} />
-        <Route path="/dashboard/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/dashboard/settings" element={<SettingsPage />} />
-        <Route path="/dashboard/contributors" element={<ContributorsPage />} />
-        <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
+        <Route path="/explore" element={<DashboardPage />} />
+        <Route path="/explore/profile" element={<ProfilePage />} />
+        <Route path="/explore/search" element={<SearchPage />} />
+        <Route path="/explore/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/explore/settings" element={<SettingsPage />} />
+        <Route path="/explore/contributors" element={<ContributorsPage />} />
+        <Route path="/explore/knowledge" element={<KnowledgePage />} />
       </Routes>
     </BrowserRouter>
   );

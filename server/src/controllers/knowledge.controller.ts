@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
-import { knowledgeItems } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { knowledgeItems, users, repositories } from "../db/schema";
+import { eq, and, or, ilike, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -11,7 +11,70 @@ export const getKnowledgeItems = async (
   next: NextFunction
 ) => {
   try {
-    const items = await db.select().from(knowledgeItems);
+    const { type, status, search, repositoryId } = req.query;
+    
+    let query = db
+      .select({
+        id: knowledgeItems.id,
+        title: knowledgeItems.title,
+        description: knowledgeItems.description,
+        content: knowledgeItems.content,
+        type: knowledgeItems.type,
+        status: knowledgeItems.status,
+        tags: knowledgeItems.tags,
+        views: knowledgeItems.views,
+        likes: knowledgeItems.likes,
+        isPublished: knowledgeItems.isPublished,
+        createdAt: knowledgeItems.createdAt,
+        updatedAt: knowledgeItems.updatedAt,
+        repositoryId: knowledgeItems.repositoryId,
+        authorId: knowledgeItems.authorId,
+        validatedBy: knowledgeItems.validatedBy,
+        validatedAt: knowledgeItems.validatedAt,
+        author: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+        },
+        repository: {
+          id: repositories.id,
+          name: repositories.name,
+          description: repositories.description,
+        },
+      })
+      .from(knowledgeItems)
+      .leftJoin(users, eq(knowledgeItems.authorId, users.id))
+      .leftJoin(repositories, eq(knowledgeItems.repositoryId, repositories.id));
+
+    const conditions = [];
+
+    if (type) {
+      conditions.push(eq(knowledgeItems.type, type as string));
+    }
+
+    if (status) {
+      conditions.push(eq(knowledgeItems.status, status as string));
+    }
+
+    if (repositoryId) {
+      conditions.push(eq(knowledgeItems.repositoryId, repositoryId as string));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(knowledgeItems.title, `%${search}%`),
+          ilike(knowledgeItems.description, `%${search}%`)
+        )!
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const items = await query.orderBy(sql`${knowledgeItems.createdAt} DESC`);
 
     res.json({
       status: "success",
@@ -31,8 +94,38 @@ export const getKnowledgeItemById = async (
     const { id } = req.params;
 
     const [item] = await db
-      .select()
+      .select({
+        id: knowledgeItems.id,
+        title: knowledgeItems.title,
+        description: knowledgeItems.description,
+        content: knowledgeItems.content,
+        type: knowledgeItems.type,
+        status: knowledgeItems.status,
+        tags: knowledgeItems.tags,
+        views: knowledgeItems.views,
+        likes: knowledgeItems.likes,
+        isPublished: knowledgeItems.isPublished,
+        createdAt: knowledgeItems.createdAt,
+        updatedAt: knowledgeItems.updatedAt,
+        repositoryId: knowledgeItems.repositoryId,
+        authorId: knowledgeItems.authorId,
+        validatedBy: knowledgeItems.validatedBy,
+        validatedAt: knowledgeItems.validatedAt,
+        author: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+        },
+        repository: {
+          id: repositories.id,
+          name: repositories.name,
+          description: repositories.description,
+        },
+      })
       .from(knowledgeItems)
+      .leftJoin(users, eq(knowledgeItems.authorId, users.id))
+      .leftJoin(repositories, eq(knowledgeItems.repositoryId, repositories.id))
       .where(eq(knowledgeItems.id, id))
       .limit(1);
 
@@ -55,7 +148,7 @@ export const createKnowledgeItem = async (
   next: NextFunction
 ) => {
   try {
-    const { title, description, content, repositoryId, tags } = req.body;
+    const { title, description, content, type, repositoryId, tags } = req.body;
 
     if (!title || !content) {
       return next(new AppError("Title and content are required", 400));
@@ -71,6 +164,7 @@ export const createKnowledgeItem = async (
         title,
         description,
         content,
+        type: type || "documentation",
         repositoryId,
         authorId: req.user.id,
         tags: tags || [],

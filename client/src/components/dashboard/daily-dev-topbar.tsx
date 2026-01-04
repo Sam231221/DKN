@@ -16,7 +16,7 @@ export function DailyDevTopbar({ user }: DailyDevTopbarProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4 gap-4">
         {/* Left: Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+        <Link to="/explore" className="flex items-center gap-2 flex-shrink-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">DKN</span>
           </div>

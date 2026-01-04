@@ -117,7 +117,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
           <div className="p-2">
             <button
               onClick={() => {
-                navigate("/dashboard/settings");
+                navigate("/explore/profile");
                 setIsOpen(false);
               }}
               className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
@@ -127,7 +127,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
             </button>
             <button
               onClick={() => {
-                navigate("/dashboard/settings");
+                navigate("/explore/settings");
                 setIsOpen(false);
               }}
               className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-left"

@@ -20,13 +20,13 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Repositories", href: "/dashboard/repositories", icon: FolderOpen },
-  { name: "Knowledge", href: "/dashboard/knowledge", icon: BookOpen },
-  { name: "Search", href: "/dashboard/search", icon: Search },
-  { name: "Trending", href: "/dashboard/trending", icon: TrendingUp },
-  { name: "Contributors", href: "/dashboard/contributors", icon: Users },
-  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Award },
+  { name: "Explore", href: "/explore", icon: LayoutDashboard },
+  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
+  { name: "Knowledge", href: "/explore/knowledge", icon: BookOpen },
+  { name: "Search", href: "/explore/search", icon: Search },
+  { name: "Trending", href: "/explore/trending", icon: TrendingUp },
+  { name: "Contributors", href: "/explore/contributors", icon: Users },
+  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -38,7 +38,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     <aside className="w-64 border-r border-border bg-background flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Logo Section */}
       <div className="p-4 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
+        <Link to="/explore" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">DKN</span>
           </div>
@@ -63,7 +63,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="p-4 border-b border-border">
         <div className="flex flex-col gap-2">
           <Button
-            onClick={() => navigate("/dashboard/knowledge")}
+            onClick={() => navigate("/explore/knowledge")}
             className="w-full justify-start"
             size="sm"
           >
@@ -94,10 +94,10 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           );
         })}
         <Link
-          to="/dashboard/settings"
+          to="/explore/settings"
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            location.pathname === "/dashboard/settings"
+            location.pathname === "/explore/settings"
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}

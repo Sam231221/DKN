@@ -18,14 +18,14 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Repositories", href: "/dashboard/repositories", icon: FolderOpen },
-  { name: "Knowledge Items", href: "/dashboard/knowledge", icon: BookOpen },
-  { name: "Search", href: "/dashboard/search", icon: Search },
-  { name: "Trending", href: "/dashboard/trending", icon: TrendingUp },
-  { name: "Contributors", href: "/dashboard/contributors", icon: Users },
-  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Award },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Explore", href: "/explore", icon: LayoutDashboard },
+  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
+  { name: "Knowledge Items", href: "/explore/knowledge", icon: BookOpen },
+  { name: "Search", href: "/explore/search", icon: Search },
+  { name: "Trending", href: "/explore/trending", icon: TrendingUp },
+  { name: "Contributors", href: "/explore/contributors", icon: Users },
+  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
+  { name: "Settings", href: "/explore/settings", icon: Settings },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -40,7 +40,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
   return (
     <aside className="w-64 border-r border-border bg-card flex flex-col">
       <div className="p-6 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
+        <Link to="/explore" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">
               DKN

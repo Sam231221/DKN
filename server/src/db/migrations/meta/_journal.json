@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1767529953560,
+      "tag": "0000_freezing_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767536248639,
+      "tag": "0001_opposite_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767537727426,
+      "tag": "0002_cold_nova",
+      "breakpoints": true
+    }
+  ]
+}
