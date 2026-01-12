@@ -29,7 +29,11 @@ export function KnowledgeFilters({ onTypeChange, onSearchChange, type, search }:
           onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
-      <Select value={type || "all"} onValueChange={(value) => onTypeChange?.(value === "all" ? undefined : value)}>
+      <Select value={type || "all"} onValueChange={(value) => {
+        if (onTypeChange) {
+          onTypeChange(value === "all" ? undefined : value);
+        }
+      }}>
         <SelectTrigger className="w-full sm:w-[180px] bg-background">
           <SelectValue placeholder="Category" />
         </SelectTrigger>

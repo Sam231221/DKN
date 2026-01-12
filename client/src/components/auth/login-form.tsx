@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { login, type LoginData } from "@/lib/api";
 
 export function LoginForm() {
@@ -29,18 +29,25 @@ export function LoginForm() {
       const response = await login(loginData);
 
       // Store user data and token
+      const user = response.user as typeof response.user & {
+        organizationType?: "individual" | "organizational";
+        organizationName?: string;
+      };
+      
       localStorage.setItem("dkn_token", response.token);
       localStorage.setItem(
         "dkn_user",
         JSON.stringify({
-          id: response.user.id,
-          email: response.user.email,
-          name: response.user.name,
-          firstName: response.user.firstName,
-          lastName: response.user.lastName,
-          role: response.user.role,
-          avatar: response.user.avatar,
-          interests: response.user.interests,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          avatar: user.avatar,
+          interests: user.interests,
+          organizationType: user.organizationType,
+          organizationName: user.organizationName,
         })
       );
 
@@ -78,9 +85,9 @@ export function LoginForm() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <button type="button" className="text-xs text-primary hover:underline">
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
               Forgot password?
-            </button>
+            </Link>
           </div>
           <Input
             id="password"

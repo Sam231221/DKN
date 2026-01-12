@@ -1,15 +1,20 @@
 import { Router } from "express";
-import { login, register, signup } from "../controllers/auth.controller";
+import { login, register, signup, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/auth.controller";
 import {
   validateLogin,
   validateSignupStep1,
   validateSignupStep2,
   validateSignupStep3,
+  validateEmailVerification,
+  validateResendVerification,
+  validatePasswordReset,
+  validateResetPassword,
 } from "../middleware/validation";
 import {
   loginRateLimiter,
   signupRateLimiter,
   authRateLimiter,
+  emailRateLimiter,
 } from "../middleware/rateLimiter";
 
 export const authRoutes = Router();
@@ -30,3 +35,11 @@ authRoutes.post(
 
 // Legacy register route (keeping for backward compatibility)
 authRoutes.post("/register", authRateLimiter, register);
+
+// Email verification routes
+authRoutes.post("/verify-email", emailRateLimiter, validateEmailVerification, verifyEmail);
+authRoutes.post("/resend-verification", emailRateLimiter, validateResendVerification, resendVerificationEmail);
+
+// Password reset routes
+authRoutes.post("/forgot-password", emailRateLimiter, validatePasswordReset, forgotPassword);
+authRoutes.post("/reset-password", emailRateLimiter, validateResetPassword, resetPassword);

@@ -6,6 +6,7 @@ import {
   integer,
   pgEnum,
   date,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -122,6 +123,13 @@ export const users = pgTable("users", {
   // ClientType attributes from UML
   industry: text("industry"), // For clients
   isActive: boolean("is_active").default(true),
+  // Email verification fields
+  emailVerified: boolean("email_verified").default(false),
+  emailVerificationToken: text("email_verification_token").unique(),
+  emailVerificationTokenExpires: timestamp("email_verification_token_expires"),
+  // Password reset fields
+  passwordResetToken: text("password_reset_token").unique(),
+  passwordResetTokenExpires: timestamp("password_reset_token_expires"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -139,23 +147,29 @@ export const clients = pgTable("clients", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Projects - ProjectType from UML
+// Projects - ProjectType from UML (Transactional/Operational Data)
+// Projects represent live client engagements with timelines and assigned consultants
 export const projects = pgTable("projects", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => createId()),
-  name: text("name").notNull(),
+  projectCode: text("project_code").unique(), // e.g., "PRJ-2024-017"
+  name: text("name").notNull(), // e.g., "Smart Factory Integration – Siemens DK"
   clientId: text("client_id")
     .references(() => clients.id)
     .notNull(),
+  domain: text("domain"), // e.g., "Smart Manufacturing"
   startDate: date("start_date").notNull(),
   endDate: date("end_date"),
   status: projectStatusEnum("status").notNull().default("planning"),
+  leadConsultantId: text("lead_consultant_id").references(() => users.id), // Lead consultant
+  clientSatisfactionScore: integer("client_satisfaction_score"), // e.g., 4.6 (0-5 scale)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Knowledge Assets - KnowledgeAssetType from UML (enhanced knowledgeItems)
+// Similar bridge pattern: Project -> KnowledgeAsset -> Repository
 export const knowledgeAssets = pgTable("knowledge_assets", {
   id: text("id")
     .primaryKey()
@@ -168,14 +182,20 @@ export const knowledgeAssets = pgTable("knowledge_assets", {
   accessLevel: accessLevelEnum("access_level").notNull().default("internal"),
   // Relationships
   clientId: text("client_id").references(() => clients.id), // belongs to ClientType
-  projectId: text("project_id").references(() => projects.id), // created by ProjectType
+  originatingProjectId: text("originating_project_id").references(
+    () => projects.id
+  ), // Project where created
   curatorId: text("curator_id").references(() => users.id), // curated by ConsultantType
-  repositoryId: text("repository_id").references(() => repositories.id),
+  repositoryId: text("repository_id").references(() => repositories.id), // Repository where stored
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Legacy knowledgeItems table (keeping for backward compatibility)
+// KnowledgeItems bridge Projects and Repositories:
+// - Created inside a project (originating_project_id)
+// - Stored inside a repository (repository_id)
+// - Reused by multiple future projects
 export const knowledgeItems = pgTable("knowledge_items", {
   id: text("id")
     .primaryKey()
@@ -184,34 +204,61 @@ export const knowledgeItems = pgTable("knowledge_items", {
   description: text("description"),
   content: text("content").notNull(),
   type: knowledgeTypeEnum("type").notNull().default("documentation"),
-  repositoryId: text("repository_id").references(() => repositories.id),
+  // Bridge relationship: Project -> KnowledgeItem -> Repository
+  originatingProjectId: text("originating_project_id").references(
+    () => projects.id
+  ), // Project where it was created
+  repositoryId: text("repository_id").references(() => repositories.id), // Repository where it's stored
   authorId: text("author_id")
     .references(() => users.id)
     .notNull(),
   status: knowledgeStatusEnum("status").notNull().default("draft"),
+  accessLevel: accessLevelEnum("access_level").notNull().default("internal"), // Access control
+  lifecycleStatus: text("lifecycle_status").default("draft"), // draft, approved, archived
   tags: text("tags").array(),
   views: integer("views").default(0),
   likes: integer("likes").default(0),
   isPublished: boolean("is_published").default(false),
   validatedBy: text("validated_by").references(() => users.id),
   validatedAt: timestamp("validated_at"),
+  // File storage fields
+  fileUrl: text("file_url"),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  fileType: text("file_type"),
+  metadata: jsonb("metadata"),
+  // Compliance and duplicate detection fields
+  complianceChecked: boolean("compliance_checked").default(false),
+  complianceViolations: text("compliance_violations").array(),
+  duplicateDetected: boolean("duplicate_detected").default(false),
+  similarItems: text("similar_items").array(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Repositories
+// Repositories - Persistent Knowledge Storage Containers
+// Repositories are structural/configuration data, very few in number (typically 1-3)
+// They represent logical containers for storing knowledge items, not operational work
 export const repositories = pgTable("repositories", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => createId()),
-  name: text("name").notNull(),
+  repositoryCode: text("repository_code").unique(), // e.g., "REP-GLOBAL-01"
+  name: text("name").notNull(), // e.g., "Global Knowledge Repository"
   description: text("description"),
   ownerId: text("owner_id")
     .references(() => users.id)
     .notNull(),
+  // Storage and infrastructure fields
+  storageLocation: text("storage_location"), // e.g., "aws-eu-central-1", "s3-bucket-name"
+  encryptionEnabled: boolean("encryption_enabled").default(true),
+  retentionPolicy: text("retention_policy"), // e.g., "7 Years", "Indefinite"
+  searchIndexStatus: text("search_index_status").default("active"), // "active", "pending", "disabled"
+  // Metadata
   itemCount: integer("item_count").default(0),
   contributorCount: integer("contributor_count").default(0),
   tags: text("tags").array(),
+  isPublic: boolean("is_public").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -322,6 +369,39 @@ export const governanceCouncil = pgTable("governance_council", {
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Notifications - For user notifications
+export const notifications = pgTable("notifications", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  type: text("type").notNull(), // e.g., "upload", "review", "approval", "rejection", "organization"
+  message: text("message").notNull(),
+  relatedId: text("related_id"), // ID of related knowledge item, etc.
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Invitations - For user account invitations
+export const invitations = pgTable("invitations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  organizationName: text("organization_name"), // Organization name for organizational invitations
+  role: userRoleEnum("role").default("employee"),
+  invitedBy: text("invited_by")
+    .references(() => users.id)
+    .notNull(),
+  accepted: boolean("accepted").default(false),
+  acceptedAt: timestamp("accepted_at"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ============================================================================
@@ -540,3 +620,9 @@ export type NewMetadata = typeof metadata.$inferInsert;
 
 export type UserInterest = typeof userInterests.$inferSelect;
 export type NewUserInterest = typeof userInterests.$inferInsert;
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+
+export type Invitation = typeof invitations.$inferSelect;
+export type NewInvitation = typeof invitations.$inferInsert;

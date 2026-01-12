@@ -28,3 +28,12 @@ export const signupRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+
+// Rate limiter for email verification and password reset requests
+export const emailRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // Limit each IP to 3 requests per 15 minutes
+  message: "Too many requests, please try again after 15 minutes.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});

@@ -31,12 +31,23 @@ npm install
 cp .env.example .env
 ```
 
-3. Update `.env` with your database credentials:
+3. Update `.env` with your database credentials and email configuration:
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/dkn_db
 JWT_SECRET=your-super-secret-jwt-key
 CORS_ORIGIN=http://localhost:5173
+
+# Gmail SMTP Configuration (for invitation emails)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-gmail-app-password
+EMAIL_FROM=your-email@gmail.com
+FRONTEND_URL=http://localhost:5173
 ```
+
+For detailed email setup instructions, see [EMAIL_SETUP.md](./EMAIL_SETUP.md).
 
 ## Database Setup
 
@@ -126,6 +137,15 @@ server/
 - `JWT_SECRET` - Secret key for JWT tokens
 - `JWT_EXPIRES_IN` - Token expiration time (default: 7d)
 - `CORS_ORIGIN` - Allowed CORS origin
+- `EMAIL_HOST` - SMTP host (default: smtp.gmail.com)
+- `EMAIL_PORT` - SMTP port (default: 587)
+- `EMAIL_SECURE` - Use TLS/SSL (default: false)
+- `EMAIL_USER` - Gmail email address
+- `EMAIL_PASSWORD` - Gmail app password (NOT regular password)
+- `EMAIL_FROM` - Email sender address (default: EMAIL_USER)
+- `FRONTEND_URL` - Frontend URL for invitation links
+
+For detailed email setup instructions, see [EMAIL_SETUP.md](./EMAIL_SETUP.md).
 
 ## License
 

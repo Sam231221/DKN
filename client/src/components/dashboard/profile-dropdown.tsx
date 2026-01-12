@@ -12,6 +12,7 @@ import {
   Sun,
   ChevronDown,
   Check,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getRoleBadgeColor, getRoleDisplayName } from "@/lib/permissions";
@@ -115,6 +116,16 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
 
           {/* Menu Items */}
           <div className="p-2">
+            <button
+              onClick={() => {
+                navigate("/dashboard");
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+            >
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+              <span>Go to Dashboard</span>
+            </button>
             <button
               onClick={() => {
                 navigate("/explore/profile");

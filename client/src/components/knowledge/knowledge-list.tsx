@@ -10,6 +10,9 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  Download,
+  AlertTriangle,
+  Briefcase,
 } from "lucide-react";
 import {
   fetchKnowledgeItems,
@@ -80,62 +83,119 @@ export function KnowledgeList({ type, status, search }: KnowledgeListProps) {
     );
   }
 
+  const getFileIcon = (fileType?: string | null) => {
+    if (!fileType) return null;
+    if (fileType.includes("pdf")) return "📄";
+    if (fileType.includes("word") || fileType.includes("document")) return "📝";
+    if (fileType.includes("excel") || fileType.includes("spreadsheet")) return "📊";
+    if (fileType.includes("powerpoint") || fileType.includes("presentation")) return "📊";
+    if (fileType.includes("image")) return "🖼️";
+    if (fileType.includes("zip")) return "📦";
+    return "📎";
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending_review":
+        return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+      case "approved":
+        return "bg-green-500/10 text-green-600 dark:text-green-400";
+      case "rejected":
+        return "bg-red-500/10 text-red-600 dark:text-red-400";
+      case "draft":
+        return "bg-gray-500/10 text-gray-600 dark:text-gray-400";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
   return (
     <div className="space-y-4">
       {items.map((item) => (
         <Card
           key={item.id}
-          className="p-6 bg-card border-border hover:border-primary/50 transition-colors"
+          className="p-4 hover:shadow-md transition-shadow"
         >
-          <div className="flex items-start gap-4">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <FileText className="h-5 w-5 text-primary" />
-            </div>
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-semibold">{item.title}</h3>
-                    {item.status === "approved" && item.validatedBy && (
-                      <CheckCircle2
-                        className="h-4 w-4 text-green-500"
-                        title="Validated by Knowledge Champion"
-                      />
-                    )}
+              <div className="flex items-start gap-3 mb-2">
+                {item.fileUrl && (
+                  <div className="text-2xl flex-shrink-0">
+                    {getFileIcon(item.fileType) || <FileText className="h-6 w-6" />}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {item.description || "No description available"}
-                  </p>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.title}</h3>
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
-                <Button variant="ghost" size="icon" className="shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
               </div>
 
-              <div className="flex flex-wrap gap-2 mb-3">
-                {item.tags && item.tags.length > 0
-                  ? item.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))
-                  : null}
-              </div>
-
-              <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 <Badge variant="outline" className="text-xs">
                   {getTypeDisplayName(item.type)}
                 </Badge>
+                <Badge className={`text-xs ${getStatusColor(item.status)}`}>
+                  {item.status.replace("_", " ")}
+                </Badge>
+                {item.originatingProject && (
+                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                    <Briefcase className="h-3 w-3" />
+                    {item.originatingProject.projectCode || item.originatingProject.name}
+                  </Badge>
+                )}
+                {item.duplicateDetected && (
+                  <Badge variant="outline" className="text-xs text-yellow-600 dark:text-yellow-400">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Duplicate detected
+                  </Badge>
+                )}
+                {item.complianceViolations && item.complianceViolations.length > 0 && (
+                  <Badge variant="outline" className="text-xs text-red-600 dark:text-red-400">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Compliance issues
+                  </Badge>
+                )}
+              </div>
+
+              {item.tags && item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {item.tags.slice(0, 5).map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      #{tag}
+                    </Badge>
+                  ))}
+                  {item.tags.length > 5 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{item.tags.length - 5}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                {item.fileUrl && (
+                  <a
+                    href={`${API_BASE_URL}${item.fileUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:text-primary transition-colors"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>Download</span>
+                  </a>
+                )}
+                {item.fileSize && (
+                  <span>{(item.fileSize / (1024 * 1024)).toFixed(2)} MB</span>
+                )}
+                <span>{item.views} views</span>
+                <span>{item.likes} likes</span>
                 {item.author && <span>by {item.author.name}</span>}
-                <div className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{item.views}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4" />
-                  <span>{item.likes}</span>
-                </div>
-                <span className="ml-auto">{formatDate(item.updatedAt)}</span>
               </div>
             </div>
           </div>

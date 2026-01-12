@@ -22,6 +22,27 @@
       "when": 1767537727426,
       "tag": "0002_cold_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767538835692,
+      "tag": "0003_mighty_forgotten_one",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1767546916492,
+      "tag": "0004_elite_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1767550409805,
+      "tag": "0005_goofy_stick",
+      "breakpoints": true
     }
   ]
 }

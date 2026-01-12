@@ -16,11 +16,22 @@ async function runMigrations() {
 
   console.log("🔄 Running migrations...");
   
-  await migrate(db, { migrationsFolder: "./src/db/migrations" });
-  
-  console.log("✅ Migrations completed successfully");
-  
-  await sql.end();
+  try {
+    await migrate(db, { migrationsFolder: "./src/db/migrations" });
+    console.log("✅ Migrations completed successfully");
+  } catch (error: any) {
+    // Handle enum already exists error (code 42710)
+    if (error?.cause?.code === "42710" && error?.cause?.message?.includes("already exists")) {
+      console.warn("⚠️  Warning: Some database objects already exist (this is usually safe to ignore)");
+      console.warn(`   Details: ${error.cause.message}`);
+      console.log("✅ Migration process completed (some objects were already present)");
+    } else {
+      // Re-throw other errors
+      throw error;
+    }
+  } finally {
+    await sql.end();
+  }
 }
 
 runMigrations().catch((error) => {

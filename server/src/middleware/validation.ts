@@ -187,3 +187,50 @@ export const validateSignupStep3 = [
     .withMessage("Each interest must be less than 50 characters"),
   handleValidationErrors,
 ];
+
+// Email verification validation
+export const validateEmailVerification = [
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage("Verification token is required")
+    .isLength({ min: 32, max: 200 })
+    .withMessage("Invalid token format"),
+  handleValidationErrors,
+];
+
+// Resend verification email validation
+export const validateResendVerification = [
+  body("email")
+    .isEmail()
+    .withMessage("Please provide a valid email address")
+    .normalizeEmail(),
+  handleValidationErrors,
+];
+
+// Forgot password validation
+export const validatePasswordReset = [
+  body("email")
+    .isEmail()
+    .withMessage("Please provide a valid email address")
+    .normalizeEmail(),
+  handleValidationErrors,
+];
+
+// Reset password validation
+export const validateResetPassword = [
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage("Reset token is required")
+    .isLength({ min: 32, max: 200 })
+    .withMessage("Invalid token format"),
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage(
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
+  handleValidationErrors,
+];

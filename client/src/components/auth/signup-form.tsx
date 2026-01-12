@@ -22,7 +22,7 @@ import {
   Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { signup, type SignupData } from "@/lib/api";
+import { signup, type SignupData, resendVerificationEmail } from "@/lib/api";
 
 // Available interests similar to daily.dev (lowercase with hyphens)
 const AVAILABLE_INTERESTS = [
@@ -93,6 +93,8 @@ export function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [interestSearch, setInterestSearch] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
 
   const [formData, setFormData] = useState<
     SignupData & { confirmPassword: string }
@@ -254,25 +256,10 @@ export function SignupForm() {
         interests: formData.interests,
       };
 
-      const response = await signup(signupPayload);
+      await signup(signupPayload);
 
-      // Store user data and token
-      localStorage.setItem("dkn_token", response.token);
-      localStorage.setItem(
-        "dkn_user",
-        JSON.stringify({
-          id: response.user.id,
-          email: response.user.email,
-          name: response.user.name,
-          firstName: response.user.firstName,
-          lastName: response.user.lastName,
-          role: response.user.role,
-          avatar: response.user.avatar,
-          interests: response.user.interests,
-        })
-      );
-
-      navigate("/explore");
+      // Show success message - user needs to verify email
+      setSignupSuccess(true);
     } catch (err) {
       setError(
         err instanceof Error
@@ -284,7 +271,78 @@ export function SignupForm() {
     }
   };
 
+  const handleResendVerification = async () => {
+    setResendingEmail(true);
+    setError("");
+    try {
+      await resendVerificationEmail(formData.email);
+      setError(""); // Clear any previous errors
+      // Show success message
+      alert("Verification email sent! Please check your inbox.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to resend verification email. Please try again."
+      );
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
   const progressPercentage = (currentStep / 3) * 100;
+
+  // Show success message if signup was successful
+  if (signupSuccess) {
+    return (
+      <Card className="p-8 bg-card border-border max-w-2xl w-full overflow-hidden">
+        <div className="text-center space-y-6">
+          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <Check className="h-8 w-8 text-green-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+            <p className="text-muted-foreground mb-4">
+              We've sent a verification link to <strong>{formData.email}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Please click the link in the email to verify your account before logging in.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <Button
+              onClick={handleResendVerification}
+              disabled={resendingEmail}
+              variant="outline"
+              className="w-full"
+            >
+              {resendingEmail ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Resend verification email"
+              )}
+            </Button>
+            <Button
+              onClick={() => navigate("/login")}
+              variant="ghost"
+              className="w-full"
+            >
+              Back to login
+            </Button>
+          </div>
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-8 bg-card border-border max-w-2xl w-full overflow-hidden">

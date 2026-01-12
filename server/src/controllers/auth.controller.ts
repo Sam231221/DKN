@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { db } from "../db/connection";
 import { users, userInterests } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../services/emailService";
 
 /**
  * Login controller with industry-standard practices
@@ -38,6 +40,12 @@ export const login = async (
 
     if (!user.isActive) {
       return next(new AppError("Account is deactivated", 403));
+    }
+
+    // Check email verification if required
+    const requireEmailVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+    if (requireEmailVerification && !user.emailVerified) {
+      return next(new AppError("Please verify your email address before logging in. Check your inbox for the verification link.", 403));
     }
 
     // Fetch user interests
@@ -125,6 +133,11 @@ export const signup = async (
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12); // Increased salt rounds for better security
 
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationTokenExpires = new Date();
+    emailVerificationTokenExpires.setHours(emailVerificationTokenExpires.getHours() + 24); // 24 hours from now
+
     // Combine first and last name for the name field (backward compatibility)
     const fullName = `${firstName} ${lastName}`.trim();
 
@@ -175,6 +188,9 @@ export const signup = async (
           organizationType === "organizational" ? organizationName?.trim() || null : null,
         employeeCount:
           organizationType === "organizational" ? employeeCount || null : null,
+        emailVerified: false,
+        emailVerificationToken,
+        emailVerificationTokenExpires,
       })
       .returning();
 
@@ -188,12 +204,13 @@ export const signup = async (
       await db.insert(userInterests).values(interestRecords);
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || "default-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
-    );
+    // Send verification email
+    try {
+      await sendVerificationEmail(email.toLowerCase(), emailVerificationToken, firstName);
+    } catch (emailError) {
+      // Log error but don't fail signup - email can be resent later
+      console.error("Failed to send verification email:", emailError);
+    }
 
     // Fetch user with interests
     const userInterestsList = await db
@@ -201,17 +218,17 @@ export const signup = async (
       .from(userInterests)
       .where(eq(userInterests.userId, newUser.id));
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
+    // Remove password and tokens from response
+    const { password: _, emailVerificationToken: __, passwordResetToken: ___, ...userWithoutPassword } = newUser;
 
     res.status(201).json({
       status: "success",
+      message: "Account created successfully. Please check your email to verify your account.",
       data: {
         user: {
           ...userWithoutPassword,
           interests: userInterestsList.map((ui) => ui.interest),
         },
-        token,
       },
     });
   } catch (error: any) {
@@ -308,6 +325,265 @@ export const register = async (
     if (error.code === "23505") {
       return next(new AppError("User with this email already exists", 409));
     }
+    next(error);
+  }
+};
+
+/**
+ * Verify email address with token
+ */
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return next(new AppError("Verification token is required", 400));
+    }
+
+    // Find user with this token
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.emailVerificationToken, token))
+      .limit(1);
+
+    if (!user) {
+      return next(new AppError("Invalid or expired verification token", 400));
+    }
+
+    // Check if token is expired
+    if (user.emailVerificationTokenExpires && new Date() > user.emailVerificationTokenExpires) {
+      return next(new AppError("Verification token has expired. Please request a new one.", 400));
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.json({
+        status: "success",
+        message: "Email is already verified",
+      });
+    }
+
+    // Update user to mark email as verified and clear token
+    await db
+      .update(users)
+      .set({
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpires: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    res.json({
+      status: "success",
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Resend verification email
+ */
+export const resendVerificationEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return next(new AppError("Email is required", 400));
+    }
+
+    // Find user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.json({
+        status: "success",
+        message: "If an account exists with this email, a verification link has been sent.",
+      });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.json({
+        status: "success",
+        message: "Email is already verified",
+      });
+    }
+
+    // Generate new verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationTokenExpires = new Date();
+    emailVerificationTokenExpires.setHours(emailVerificationTokenExpires.getHours() + 24); // 24 hours
+
+    // Update user with new token
+    await db
+      .update(users)
+      .set({
+        emailVerificationToken,
+        emailVerificationTokenExpires,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, emailVerificationToken, user.firstName || undefined);
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      return next(new AppError("Failed to send verification email. Please try again later.", 500));
+    }
+
+    res.json({
+      status: "success",
+      message: "Verification email sent. Please check your inbox.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Request password reset
+ */
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return next(new AppError("Email is required", 400));
+    }
+
+    // Find user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    // Don't reveal if user exists or not for security
+    // Always return success message
+    if (!user) {
+      return res.json({
+        status: "success",
+        message: "If an account exists with this email, a password reset link has been sent.",
+      });
+    }
+
+    // Generate password reset token
+    const passwordResetToken = crypto.randomBytes(32).toString("hex");
+    const passwordResetTokenExpires = new Date();
+    passwordResetTokenExpires.setHours(passwordResetTokenExpires.getHours() + 1); // 1 hour
+
+    // Update user with reset token
+    await db
+      .update(users)
+      .set({
+        passwordResetToken,
+        passwordResetTokenExpires,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Send password reset email
+    try {
+      await sendPasswordResetEmail(user.email, passwordResetToken, user.firstName || undefined);
+    } catch (emailError) {
+      console.error("Failed to send password reset email:", emailError);
+      return next(new AppError("Failed to send password reset email. Please try again later.", 500));
+    }
+
+    res.json({
+      status: "success",
+      message: "If an account exists with this email, a password reset link has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset password with token
+ */
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token) {
+      return next(new AppError("Reset token is required", 400));
+    }
+
+    if (!password) {
+      return next(new AppError("New password is required", 400));
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return next(new AppError("Password must be at least 8 characters long", 400));
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return next(new AppError("Password must contain at least one uppercase letter, one lowercase letter, and one number", 400));
+    }
+
+    // Find user with this token
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.passwordResetToken, token))
+      .limit(1);
+
+    if (!user) {
+      return next(new AppError("Invalid or expired reset token", 400));
+    }
+
+    // Check if token is expired
+    if (user.passwordResetTokenExpires && new Date() > user.passwordResetTokenExpires) {
+      return next(new AppError("Reset token has expired. Please request a new one.", 400));
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update user password and clear reset token
+    await db
+      .update(users)
+      .set({
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetTokenExpires: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    res.json({
+      status: "success",
+      message: "Password reset successfully. You can now login with your new password.",
+    });
+  } catch (error) {
     next(error);
   }
 };

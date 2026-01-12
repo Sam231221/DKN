@@ -30,6 +30,32 @@ export const errorHandler = (
     });
   }
 
+  // Handle Multer errors (file upload errors)
+  if (err.name === "MulterError") {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        status: "error",
+        message: err.message || "File size exceeds the maximum allowed size of 50MB",
+      });
+    }
+    if (err.code === "LIMIT_FILE_COUNT") {
+      return res.status(400).json({
+        status: "error",
+        message: "Too many files. Only one file is allowed.",
+      });
+    }
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        status: "error",
+        message: "Unexpected file field. Use 'file' as the field name.",
+      });
+    }
+    return res.status(400).json({
+      status: "error",
+      message: err.message || "File upload error",
+    });
+  }
+
   // Handle other errors
   const statusCode = err.statusCode || 500;
   const status = err.status || "error";

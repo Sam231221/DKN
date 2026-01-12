@@ -8,6 +8,9 @@ import { CTASection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
 import LoginPage from "@/pages/login/page";
 import SignupPage from "@/pages/signup/page";
+import VerifyEmailPage from "@/pages/verify-email/page";
+import ForgotPasswordPage from "@/pages/forgot-password/page";
+import ResetPasswordPage from "@/pages/reset-password/page";
 import DashboardPage from "@/pages/dashboard/page";
 import ProfilePage from "@/pages/dashboard/profile/page";
 import SearchPage from "@/pages/dashboard/search/page";
@@ -15,6 +18,12 @@ import LeaderboardPage from "@/pages/dashboard/leaderboard/page";
 import SettingsPage from "@/pages/dashboard/settings/page";
 import ContributorsPage from "@/pages/dashboard/contributors/page";
 import KnowledgePage from "@/pages/dashboard/knowledge/page";
+import OrganizationDashboardPage from "@/pages/organization-dashboard/page";
+import ClientsPage from "@/pages/organization-dashboard/clients/page";
+import EmployeesPage from "@/pages/organization-dashboard/employees/page";
+import KnowledgeItemsPage from "@/pages/organization-dashboard/knowledge-items/page";
+import RepositoriesPage from "@/pages/organization-dashboard/repositories/page";
+import ProjectsPage from "@/pages/organization-dashboard/projects/page";
 
 function Home() {
   return (
@@ -37,6 +46,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/explore" element={<DashboardPage />} />
         <Route path="/explore/profile" element={<ProfilePage />} />
         <Route path="/explore/search" element={<SearchPage />} />
@@ -44,6 +56,12 @@ export default function App() {
         <Route path="/explore/settings" element={<SettingsPage />} />
         <Route path="/explore/contributors" element={<ContributorsPage />} />
         <Route path="/explore/knowledge" element={<KnowledgePage />} />
+        <Route path="/dashboard" element={<OrganizationDashboardPage />} />
+        <Route path="/dashboard/clients" element={<ClientsPage />} />
+        <Route path="/dashboard/employees" element={<EmployeesPage />} />
+        <Route path="/dashboard/projects" element={<ProjectsPage />} />
+        <Route path="/dashboard/knowledge-items" element={<KnowledgeItemsPage />} />
+        <Route path="/dashboard/repositories" element={<RepositoriesPage />} />
       </Routes>
     </BrowserRouter>
   );

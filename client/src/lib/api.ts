@@ -19,10 +19,20 @@ export interface KnowledgeItem {
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
-  repositoryId: string | null;
+  originatingProjectId?: string | null; // Project where this item was created
+  repositoryId: string | null; // Repository where this item is stored
   authorId: string;
   validatedBy: string | null;
   validatedAt: string | null;
+  accessLevel?: string;
+  lifecycleStatus?: string;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  fileType?: string | null;
+  duplicateDetected?: boolean;
+  complianceChecked?: boolean;
+  complianceViolations?: string[] | null;
   author?: {
     id: string;
     name: string;
@@ -33,6 +43,11 @@ export interface KnowledgeItem {
     id: string;
     name: string;
     description: string | null;
+  };
+  originatingProject?: {
+    id: string;
+    name: string;
+    projectCode?: string;
   };
 }
 
@@ -100,6 +115,280 @@ export function formatDate(dateString: string): string {
   return date.toLocaleDateString();
 }
 
+// Upload knowledge item with file
+export interface UploadKnowledgeItemData {
+  title: string;
+  description: string;
+  content?: string;
+  type: string;
+  repositoryId?: string;
+  originatingProjectId?: string; // Project where this item is created
+  accessLevel?: string;
+  lifecycleStatus?: string;
+  tags?: string[];
+  file?: File;
+}
+
+export interface UploadKnowledgeItemResponse extends KnowledgeItem {
+  warnings?: string[];
+  similarItems?: Array<{ id: string; title: string; score: number }>;
+  complianceViolations?: string[];
+}
+
+export async function uploadKnowledgeItem(
+  data: UploadKnowledgeItemData,
+  onProgress?: (progress: number) => void
+): Promise<UploadKnowledgeItemResponse> {
+  const token = localStorage.getItem("dkn_token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const formData = new FormData();
+  formData.append("title", data.title);
+  formData.append("description", data.description);
+  if (data.content) formData.append("content", data.content);
+  formData.append("type", data.type);
+  if (data.repositoryId) formData.append("repositoryId", data.repositoryId);
+  if (data.originatingProjectId) formData.append("originatingProjectId", data.originatingProjectId);
+  if (data.accessLevel) formData.append("accessLevel", data.accessLevel);
+  if (data.lifecycleStatus) formData.append("lifecycleStatus", data.lifecycleStatus);
+  if (data.tags && data.tags.length > 0) {
+    formData.append("tags", JSON.stringify(data.tags));
+  }
+  if (data.file) {
+    formData.append("file", data.file);
+  }
+
+  const xhr = new XMLHttpRequest();
+
+  return new Promise((resolve, reject) => {
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable && onProgress) {
+        const progress = (e.loaded / e.total) * 100;
+        onProgress(progress);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const result: ApiResponse<KnowledgeItem> & {
+            warnings?: string[];
+            similarItems?: Array<{ id: string; title: string; score: number }>;
+            complianceViolations?: string[];
+          } = JSON.parse(xhr.responseText);
+          if (!result.data) {
+            reject(new Error("Upload failed: No data returned"));
+            return;
+          }
+          // Return data with warnings, similarItems, and complianceViolations from root level
+          resolve({
+            ...result.data,
+            warnings: result.warnings,
+            similarItems: result.similarItems,
+            complianceViolations: result.complianceViolations,
+          } as UploadKnowledgeItemResponse);
+        } catch {
+          reject(new Error("Failed to parse response"));
+        }
+      } else {
+        try {
+          const error = JSON.parse(xhr.responseText);
+          reject(new Error(error.message || "Upload failed"));
+        } catch {
+          reject(new Error(`Upload failed: ${xhr.statusText}`));
+        }
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Network error during upload"));
+    });
+
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload aborted"));
+    });
+
+    xhr.open("POST", `${API_BASE_URL}/knowledge`);
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.send(formData);
+  });
+}
+
+// Fetch repositories
+export interface Repository {
+  id: string;
+  repositoryCode?: string;
+  name: string;
+  description: string | null;
+  ownerId: string;
+  storageLocation?: string;
+  encryptionEnabled?: boolean;
+  retentionPolicy?: string;
+  searchIndexStatus?: string;
+  isPublic?: boolean;
+  itemCount: number;
+  contributorCount: number;
+  tags: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchRepositories(): Promise<Repository[]> {
+  const token = localStorage.getItem("dkn_token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/repositories`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch repositories: ${response.statusText}`);
+  }
+
+  const result: ApiResponse<Repository[]> = await response.json();
+  return result.data || [];
+}
+
+// Projects API
+export interface Project {
+  id: string;
+  projectCode?: string;
+  name: string;
+  clientId: string;
+  clientName?: string;
+  domain?: string;
+  startDate: string;
+  endDate?: string | null;
+  status: "planning" | "active" | "on_hold" | "completed" | "cancelled";
+  leadConsultantId?: string | null;
+  leadConsultantName?: string;
+  clientSatisfactionScore?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchProjects(params?: {
+  status?: string;
+  search?: string;
+  clientId?: string;
+}): Promise<Project[]> {
+  const token = localStorage.getItem("dkn_token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.search) queryParams.append("search", params.search);
+  if (params?.clientId) queryParams.append("clientId", params.clientId);
+
+  const url = `${API_BASE_URL}/projects${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch projects: ${response.statusText}`);
+  }
+
+  const result: ApiResponse<Project[]> = await response.json();
+  return result.data || [];
+}
+
+// Clients API
+export interface Client {
+  id: string;
+  name: string;
+  industry?: string | null;
+  regionId?: string | null;
+  userId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchClients(params?: {
+  search?: string;
+}): Promise<Client[]> {
+  const token = localStorage.getItem("dkn_token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const queryParams = new URLSearchParams();
+  if (params?.search) queryParams.append("search", params.search);
+
+  const url = `${API_BASE_URL}/clients${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch clients: ${response.statusText}`);
+  }
+
+  const result: ApiResponse<Client[]> = await response.json();
+  return result.data || [];
+}
+
+// Employees API
+export interface Employee {
+  id: string;
+  email: string;
+  name: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  role: string;
+  status: "active" | "inactive" | "pending";
+  department?: string | null;
+  position?: string | null;
+  avatar?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchEmployees(params?: {
+  status?: string;
+  role?: string;
+  search?: string;
+}): Promise<Employee[]> {
+  const token = localStorage.getItem("dkn_token");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.role) queryParams.append("role", params.role);
+  if (params?.search) queryParams.append("search", params.search);
+
+  const url = `${API_BASE_URL}/employees${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch employees: ${response.statusText}`);
+  }
+
+  const result: ApiResponse<Employee[]> = await response.json();
+  return result.data || [];
+}
+
 // Auth API functions
 export interface SignupData {
   firstName: string;
@@ -134,11 +423,13 @@ export interface AuthResponse {
     avatar?: string;
     experienceLevel?: string;
     interests?: string[];
+    organizationType?: "individual" | "organizational";
+    organizationName?: string;
   };
   token: string;
 }
 
-export async function signup(data: SignupData): Promise<AuthResponse> {
+export async function signup(data: SignupData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
     headers: {
@@ -152,11 +443,10 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
     throw new Error(error.message || "Failed to sign up");
   }
 
-  const result: ApiResponse<AuthResponse> = await response.json();
-  if (!result.data) {
-    throw new Error("Signup failed");
+  const result: ApiResponse<{ message?: string }> = await response.json();
+  if (result.status === "error") {
+    throw new Error(result.message || "Signup failed");
   }
-  return result.data;
 }
 
 export async function login(data: LoginData): Promise<AuthResponse> {
@@ -173,10 +463,91 @@ export async function login(data: LoginData): Promise<AuthResponse> {
     throw new Error(error.message || "Failed to login");
   }
 
+
   const result: ApiResponse<AuthResponse> = await response.json();
   if (!result.data) {
     throw new Error("Login failed");
   }
   return result.data;
 }
+// Email verification API functions
+export async function verifyEmail(token: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }),
+  });
 
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to verify email");
+  }
+
+  const result: ApiResponse<void> = await response.json();
+  if (result.status === "error") {
+    throw new Error(result.message || "Failed to verify email");
+  }
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to resend verification email");
+  }
+
+  const result: ApiResponse<void> = await response.json();
+  if (result.status === "error") {
+    throw new Error(result.message || "Failed to resend verification email");
+  }
+}
+
+// Password reset API functions
+export async function forgotPassword(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to send password reset email");
+  }
+
+  const result: ApiResponse<void> = await response.json();
+  if (result.status === "error") {
+    throw new Error(result.message || "Failed to send password reset email");
+  }
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to reset password");
+  }
+
+  const result: ApiResponse<void> = await response.json();
+  if (result.status === "error") {
+    throw new Error(result.message || "Failed to reset password");
+  }
+}
