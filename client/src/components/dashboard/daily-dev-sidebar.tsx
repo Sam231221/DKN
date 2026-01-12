@@ -3,12 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  FolderOpen,
   Users,
   Award,
   Search,
   Settings,
-  BookOpen,
   TrendingUp,
   Plus,
   ChevronLeft,
@@ -18,20 +16,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface DailyDevSidebarProps {
-  user: any;
+  user?: any;
 }
 
 const navigation = [
   { name: "Explore", href: "/explore", icon: LayoutDashboard },
-  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
-  { name: "Knowledge", href: "/explore/knowledge", icon: BookOpen },
   { name: "Search", href: "/explore/search", icon: Search },
   { name: "Trending", href: "/explore/trending", icon: TrendingUp },
   { name: "Contributors", href: "/explore/contributors", icon: Users },
   { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
 ];
 
-export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
+export function DailyDevSidebar({ user: _user }: DailyDevSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,7 +84,7 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
       <div className={cn("p-4 border-b border-border", isCollapsed && "px-2")}>
         {isCollapsed ? (
           <Button
-            onClick={() => navigate("/explore/knowledge")}
+            onClick={() => navigate("/explore?create=true")}
             variant="ghost"
             size="icon"
             className="w-full h-9"
@@ -98,7 +94,7 @@ export function DailyDevSidebar({ user }: DailyDevSidebarProps) {
           </Button>
         ) : (
           <Button
-            onClick={() => navigate("/explore/knowledge")}
+            onClick={() => navigate("/explore?create=true")}
             className="w-full justify-start"
             size="sm"
           >

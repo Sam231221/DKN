@@ -42,7 +42,7 @@ export function HeroSection() {
               asChild
               className="text-base bg-transparent"
             >
-              <Link href="#demo">Watch Demo</Link>
+              <a href="#demo">Watch Demo</a>
             </Button>
           </div>
         </div>

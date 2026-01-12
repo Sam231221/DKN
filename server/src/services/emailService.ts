@@ -1,4 +1,8 @@
 import nodemailer from "nodemailer";
+import * as dotenv from "dotenv";
+
+// Ensure environment variables are loaded
+dotenv.config();
 
 /**
  * Email Service using Gmail SMTP
@@ -13,26 +17,46 @@ import nodemailer from "nodemailer";
  * - FRONTEND_URL: Frontend URL for invitation links
  */
 
-// Create reusable transporter
-const createTransporter = () => {
+// Lazy transporter creation - create it when needed, not at module load
+let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+const getTransporter = () => {
+  // Re-check environment variables each time (in case they were loaded after module import)
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
     console.warn("⚠️  EMAIL_USER or EMAIL_PASSWORD not set. Email service will log to console only.");
+    console.warn(`   EMAIL_USER: ${process.env.EMAIL_USER ? "✅ Set" : "❌ Not set"}`);
+    console.warn(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? "✅ Set" : "❌ Not set"}`);
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.EMAIL_PORT || "587"),
-    secure: process.env.EMAIL_SECURE === "true" || process.env.EMAIL_PORT === "465", // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD, // Gmail app password
-    },
-  });
+  // Create transporter if it doesn't exist or if credentials changed
+  if (!transporter) {
+    try {
+      transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.EMAIL_PORT || "587"),
+        secure: process.env.EMAIL_SECURE === "true" || process.env.EMAIL_PORT === "465", // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD, // Gmail app password
+        },
+      });
+      console.log("✅ Email transporter created successfully");
+      console.log(`   Host: ${process.env.EMAIL_HOST || "smtp.gmail.com"}`);
+      console.log(`   Port: ${process.env.EMAIL_PORT || "587"}`);
+      console.log(`   User: ${process.env.EMAIL_USER}`);
+    } catch (error: any) {
+      console.error("❌ Failed to create email transporter:", error.message);
+      return null;
+    }
+  }
+
+  return transporter;
 };
 
-const transporter = createTransporter();
-const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@dkn.com";
+const getEmailFrom = () => {
+  return process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@dkn.com";
+};
 
 interface EmailOptions {
   to: string;
@@ -45,8 +69,10 @@ interface EmailOptions {
  * Send email using Gmail SMTP
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
+  const emailTransporter = getTransporter();
+  
   // If transporter is not configured, log to console
-  if (!transporter) {
+  if (!emailTransporter) {
     console.log("📧 Email would be sent (email service not configured):");
     console.log(`To: ${options.to}`);
     console.log(`Subject: ${options.subject}`);
@@ -55,8 +81,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: emailFrom,
+    const info = await emailTransporter.sendMail({
+      from: getEmailFrom(),
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -67,6 +93,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     console.log(`Message ID: ${info.messageId}`);
   } catch (error: any) {
     console.error("❌ Error sending email:", error.message);
+    console.error("   Error code:", error.code);
+    console.error("   Error details:", error);
     // Don't throw error - we don't want email failures to break the application
     // But log it for debugging
     if (error.code === "EAUTH") {
@@ -74,6 +102,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       console.error("⚠️  For Gmail, you need to use an App Password, not your regular password.");
       console.error("⚠️  Generate one at: https://myaccount.google.com/apppasswords");
     }
+    // Re-throw so calling code knows it failed
+    throw error;
   }
 }
 
@@ -156,8 +186,8 @@ export async function sendInvitationEmail(
         <h2>You've been invited! 🎉</h2>
         ${organizationName ? `<p><strong>${inviterName || "An administrator"}</strong> has invited you to join <strong>${organizationName}</strong> on the DKN Knowledge Network platform.</p>` : "<p>You've been invited to join the DKN Knowledge Network platform.</p>"}
         <p>Click the button below to accept the invitation and create your account:</p>
-        <div style="text-align: center;">
-          <a href="${invitationUrl}" class="button">Accept Invitation</a>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${invitationUrl}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; border: none;">Accept Invitation</a>
         </div>
         <p>Or copy and paste this link into your browser:</p>
         <div class="url-box">${invitationUrl}</div>
@@ -269,8 +299,8 @@ export async function sendVerificationEmail(
         <h2>Verify your email address</h2>
         <p>${greeting}</p>
         <p>Thank you for signing up for DKN Knowledge Network! Please verify your email address by clicking the button below:</p>
-        <div style="text-align: center;">
-          <a href="${verificationUrl}" class="button">Verify Email Address</a>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; border: none;">Verify Email Address</a>
         </div>
         <p>Or copy and paste this link into your browser:</p>
         <div class="url-box">${verificationUrl}</div>
@@ -391,8 +421,8 @@ export async function sendPasswordResetEmail(
         <h2>Reset your password</h2>
         <p>${greeting}</p>
         <p>We received a request to reset your password for your DKN Knowledge Network account. Click the button below to create a new password:</p>
-        <div style="text-align: center;">
-          <a href="${resetUrl}" class="button">Reset Password</a>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; border: none;">Reset Password</a>
         </div>
         <p>Or copy and paste this link into your browser:</p>
         <div class="url-box">${resetUrl}</div>

@@ -23,24 +23,24 @@ export function Navigation() {
             </Link>
 
             <div className="hidden md:flex items-center gap-6">
-              <Link
+              <a
                 href="#features"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Features
-              </Link>
-              <Link
+              </a>
+              <a
                 href="#solutions"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Solutions
-              </Link>
-              <Link
+              </a>
+              <a
                 href="#about"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 About
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -69,27 +69,27 @@ export function Navigation() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <div className="space-y-1 px-4 pb-3 pt-2">
-            <Link
+            <a
               href="#features"
               className="block rounded-md px-3 py-2 text-base text-muted-foreground hover:bg-muted"
               onClick={() => setMobileMenuOpen(false)}
             >
               Features
-            </Link>
-            <Link
+            </a>
+            <a
               href="#solutions"
               className="block rounded-md px-3 py-2 text-base text-muted-foreground hover:bg-muted"
               onClick={() => setMobileMenuOpen(false)}
             >
               Solutions
-            </Link>
-            <Link
+            </a>
+            <a
               href="#about"
               className="block rounded-md px-3 py-2 text-base text-muted-foreground hover:bg-muted"
               onClick={() => setMobileMenuOpen(false)}
             >
               About
-            </Link>
+            </a>
             <div className="flex flex-col gap-2 pt-4">
               <Button variant="ghost" asChild className="w-full">
                 <Link to="/login">Sign in</Link>

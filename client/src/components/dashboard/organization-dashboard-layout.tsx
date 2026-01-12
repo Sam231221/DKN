@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ProfileDropdown } from "./profile-dropdown";
 import { TeamsDropdown } from "./teams-dropdown";
 import { OrganizationSidebar } from "./organization-sidebar";

@@ -3,12 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  FolderOpen,
   Users,
   Award,
   Search,
   Settings,
-  BookOpen,
   TrendingUp,
   Plus,
 } from "lucide-react";
@@ -16,20 +14,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface DashboardSidebarProps {
-  user: any;
+  user?: any;
 }
 
 const navigation = [
   { name: "Explore", href: "/explore", icon: LayoutDashboard },
-  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
-  { name: "Knowledge", href: "/explore/knowledge", icon: BookOpen },
   { name: "Search", href: "/explore/search", icon: Search },
   { name: "Trending", href: "/explore/trending", icon: TrendingUp },
   { name: "Contributors", href: "/explore/contributors", icon: Users },
   { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
 ];
 
-export function DashboardSidebar({ user }: DashboardSidebarProps) {
+export function DashboardSidebar({ user: _user }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,7 +59,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="p-4 border-b border-border">
         <div className="flex flex-col gap-2">
           <Button
-            onClick={() => navigate("/explore/knowledge")}
+            onClick={() => navigate("/explore?create=true")}
             className="w-full justify-start"
             size="sm"
           >

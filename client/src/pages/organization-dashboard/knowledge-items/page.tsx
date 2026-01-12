@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { KnowledgeList } from "@/components/knowledge/knowledge-list";
@@ -6,19 +6,37 @@ import { KnowledgeFilters } from "@/components/knowledge/knowledge-filters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FileText, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CreateKnowledgeDialog } from "@/components/knowledge/create-knowledge-dialog";
+import { EditKnowledgeDialog } from "@/components/knowledge/edit-knowledge-dialog";
+import { DeleteKnowledgeDialog } from "@/components/knowledge/delete-knowledge-dialog";
+import {
+  type KnowledgeItem,
+  fetchKnowledgeItemsStats,
+  type KnowledgeItemsStats,
+} from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 interface User {
+  id?: string;
   organizationType?: string;
   name?: string;
   email?: string;
   organizationName?: string;
+  role?: string;
 }
 
 export default function KnowledgeItemsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [stats, setStats] = useState<KnowledgeItemsStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user");
@@ -39,14 +57,73 @@ export default function KnowledgeItemsPage() {
     });
   }, [navigate]);
 
+  // Load stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const data = await fetchKnowledgeItemsStats();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to load stats:", err);
+        // Set default stats on error
+        setStats({
+          total: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          draft: 0,
+          archived: 0,
+        });
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    if (user) {
+      loadStats();
+    }
+  }, [user, refreshKey]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
+
+  const handleEdit = useCallback((item: KnowledgeItem) => {
+    setSelectedItem(item);
+    setShowEditDialog(true);
+  }, []);
+
+  const handleDelete = useCallback((item: KnowledgeItem) => {
+    setSelectedItem(item);
+    setShowDeleteDialog(true);
+  }, []);
+
+  const handleEditSuccess = useCallback(() => {
+    setShowEditDialog(false);
+    setSelectedItem(null);
+    handleRefresh();
+  }, [handleRefresh]);
+
+  const handleDeleteSuccess = useCallback(() => {
+    setShowDeleteDialog(false);
+    setSelectedItem(null);
+    handleRefresh();
+  }, [handleRefresh]);
+
+  const handleCreateSuccess = useCallback(() => {
+    handleRefresh();
+  }, [handleRefresh]);
+
   if (!user) return null;
 
-  // Mock stats - replace with API call
-  const stats = {
-    total: 124,
-    approved: 98,
-    pending: 18,
-    rejected: 8,
+  const displayStats = stats || {
+    total: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+    draft: 0,
+    archived: 0,
   };
 
   return (
@@ -60,7 +137,7 @@ export default function KnowledgeItemsPage() {
               Browse and manage organizational knowledge items
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Item
           </Button>
@@ -76,7 +153,11 @@ export default function KnowledgeItemsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              {loadingStats ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="text-2xl font-bold">{displayStats.total}</div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -87,7 +168,11 @@ export default function KnowledgeItemsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.approved}</div>
+              {loadingStats ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="text-2xl font-bold">{displayStats.approved}</div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -98,7 +183,11 @@ export default function KnowledgeItemsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
+              {loadingStats ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="text-2xl font-bold">{displayStats.pending}</div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -109,7 +198,11 @@ export default function KnowledgeItemsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.rejected}</div>
+              {loadingStats ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="text-2xl font-bold">{displayStats.rejected}</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -123,7 +216,34 @@ export default function KnowledgeItemsPage() {
         />
 
         {/* Knowledge Items List */}
-        <KnowledgeList type={typeFilter} search={searchQuery} />
+        <KnowledgeList
+          key={refreshKey}
+          type={typeFilter}
+          search={searchQuery}
+          user={user ? { id: user.id || "", role: user.role || "employee" } : undefined}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {/* Dialogs */}
+        <CreateKnowledgeDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={handleCreateSuccess}
+        />
+        <EditKnowledgeDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          itemId={selectedItem?.id || null}
+          onSuccess={handleEditSuccess}
+          user={user ? { id: user.id || "", role: user.role || "employee" } : undefined}
+        />
+        <DeleteKnowledgeDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          itemId={selectedItem?.id || null}
+          onSuccess={handleDeleteSuccess}
+        />
       </div>
     </OrganizationDashboardLayout>
   );

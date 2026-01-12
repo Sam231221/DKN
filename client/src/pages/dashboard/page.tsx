@@ -1,133 +1,92 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState, useCallback } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { ArticleCard } from "@/components/explore/article-card"
+import { KnowledgeItemCard } from "@/components/explore/knowledge-item-card"
 import { FilterTabs } from "@/components/explore/filter-tabs"
+import { CreateKnowledgeDialog } from "@/components/knowledge/create-knowledge-dialog"
+import { Button } from "@/components/ui/button"
+import { Plus, Loader2 } from "lucide-react"
 import type { FilterType } from "@/components/explore/filter-tabs"
-
-// Mock data for articles
-const mockArticles = [
-  {
-    id: "1",
-    title: "Getting Started with TypeScript: A Comprehensive Guide for Developers",
-    author: "John Doe",
-    tags: ["typescript", "programming", "web-development"],
-    image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop",
-    readTime: "8m",
-    publishedAt: "Jan 02",
-    upvotes: 142,
-    comments: 23,
-  },
-  {
-    id: "2",
-    title: "Building Scalable React Applications with Modern Patterns",
-    author: "Sarah Chen",
-    tags: ["react", "javascript", "frontend"],
-    readTime: "12m",
-    publishedAt: "Jan 01",
-    upvotes: 89,
-    comments: 15,
-  },
-  {
-    id: "3",
-    title: "Understanding Async/Await in JavaScript: Best Practices",
-    author: "Mike Johnson",
-    tags: ["javascript", "async", "programming"],
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop",
-    readTime: "6m",
-    publishedAt: "Dec 30",
-    upvotes: 67,
-    comments: 12,
-  },
-  {
-    id: "4",
-    title: "Database Design Principles for Modern Applications",
-    author: "Emily Davis",
-    tags: ["database", "backend", "architecture"],
-    readTime: "10m",
-    publishedAt: "Dec 28",
-    upvotes: 54,
-    comments: 8,
-  },
-  {
-    id: "5",
-    title: "CSS Grid vs Flexbox: When to Use Which",
-    author: "Alex Brown",
-    tags: ["css", "frontend", "web-design"],
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop",
-    readTime: "5m",
-    publishedAt: "Dec 27",
-    upvotes: 43,
-    comments: 7,
-  },
-  {
-    id: "6",
-    title: "Introduction to GraphQL: A Better Alternative to REST",
-    author: "David Wilson",
-    tags: ["graphql", "api", "backend"],
-    readTime: "9m",
-    publishedAt: "Dec 25",
-    upvotes: 38,
-    comments: 5,
-  },
-  {
-    id: "7",
-    title: "Docker Containerization: Simplifying Development Workflows",
-    author: "Lisa Anderson",
-    tags: ["docker", "devops", "containers"],
-    image: "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800&h=400&fit=crop",
-    readTime: "11m",
-    publishedAt: "Dec 23",
-    upvotes: 76,
-    comments: 18,
-  },
-  {
-    id: "8",
-    title: "Python Best Practices: Writing Clean and Maintainable Code",
-    author: "Chris Taylor",
-    tags: ["python", "programming", "best-practices"],
-    readTime: "7m",
-    publishedAt: "Dec 21",
-    upvotes: 61,
-    comments: 14,
-  },
-]
+import { fetchKnowledgeItems, type KnowledgeItem } from "@/lib/api"
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [user, setUser] = useState<any>(null)
   const [activeFilter, setActiveFilter] = useState<FilterType>("popular")
-  const [articles, setArticles] = useState(mockArticles)
+  const [allItems, setAllItems] = useState<KnowledgeItem[]>([])
+  const [items, setItems] = useState<KnowledgeItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user")
     if (!userData) {
       navigate("/login")
     } else {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      // Redirect organizational users to their dashboard
+      if (parsedUser.organizationType === "organizational") {
+        navigate("/dashboard")
+        return
+      }
+      setUser(parsedUser)
     }
   }, [navigate])
 
   useEffect(() => {
-    // Sort articles based on active filter
-    const sorted = [...mockArticles].sort((a, b) => {
+    // Check if create dialog should be opened from URL
+    const createParam = searchParams.get("create")
+    if (createParam === "true") {
+      setShowCreateDialog(true)
+      // Remove the query param from URL
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
+  const loadItems = useCallback(async () => {
+    try {
+      setLoading(true)
+      const fetchedItems = await fetchKnowledgeItems({ status: "approved" })
+      setAllItems(fetchedItems)
+    } catch (error) {
+      console.error("Failed to fetch knowledge items:", error)
+      setAllItems([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      loadItems()
+    }
+  }, [user, loadItems])
+
+  useEffect(() => {
+    // Sort items based on active filter
+    const sorted = [...allItems].sort((a, b) => {
       switch (activeFilter) {
         case "popular":
-          return (b.upvotes + b.comments) - (a.upvotes + a.comments)
+          return (b.likes + b.views) - (a.likes + a.views)
         case "upvotes":
-          return b.upvotes - a.upvotes
+          return b.likes - a.likes
         case "comments":
-          return b.comments - a.comments
+          // For now, we don't have comments count, so use views as proxy
+          return b.views - a.views
         case "date":
-          // Simple date comparison - assumes format like "Jan 02" or "Dec 30"
-          // In a real app, you'd use proper date parsing
-          return b.publishedAt.localeCompare(a.publishedAt)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         default:
           return 0
       }
     })
-    setArticles(sorted)
-  }, [activeFilter])
+    setItems(sorted)
+  }, [activeFilter, allItems])
+
+  const handleCreateSuccess = useCallback(() => {
+    setShowCreateDialog(false)
+    loadItems()
+  }, [loadItems])
 
   if (!user) return null
 
@@ -135,20 +94,55 @@ export default function DashboardPage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Explore</h1>
-          <p className="text-muted-foreground mt-1">Discover knowledge repositories and trending topics</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Explore</h1>
+            <p className="text-muted-foreground mt-1">Discover knowledge repositories and trending topics</p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Knowledge
+          </Button>
         </div>
 
         {/* Filter Tabs */}
         <FilterTabs activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
-        {/* Articles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} {...article} />
-          ))}
-        </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Items Grid */}
+        {!loading && items.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No knowledge items found. Create your first item to get started!</p>
+          </div>
+        )}
+
+        {!loading && items.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item) => (
+              <KnowledgeItemCard 
+                key={item.id} 
+                item={item}
+                onClick={() => {
+                  // Navigate to item detail or open in modal
+                  console.log("View item:", item.id)
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Create Dialog */}
+        <CreateKnowledgeDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={handleCreateSuccess}
+        />
       </div>
     </DashboardLayout>
   )

@@ -20,47 +20,50 @@ import {
   User,
   Search,
   Check,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { signup, type SignupData, resendVerificationEmail } from "@/lib/api";
 
-// Available interests similar to daily.dev (lowercase with hyphens)
+// Available interests based on Digital Knowledge Network domains (lowercase with hyphens)
 const AVAILABLE_INTERESTS = [
-  "ai",
-  "data-science",
-  "elixir",
-  "open-source",
-  "tech-news",
-  "devops",
-  "mobile",
-  "database",
-  "javascript",
-  "rust",
-  "react",
-  "java",
-  "ruby",
-  "architecture",
-  "webdev",
-  ".net",
-  "python",
-  "gaming",
-  "security",
-  "machine-learning",
-  "golang",
-  "cloud",
-  "crypto",
-  "testing",
-  "tools",
-  "design",
-  "product-management",
-  "ui-ux",
-  "frontend",
-  "backend",
-  "fullstack",
-  "agile",
+  "knowledge-management",
+  "knowledge-sharing",
+  "organizational-learning",
+  "digital-transformation",
+  "it-integration",
   "project-management",
-  "business",
-  "marketing",
+  "client-deliverables",
+  "best-practices",
+  "documentation",
+  "content-curation",
+  "expertise-mapping",
+  "collaboration",
+  "cross-functional-teams",
+  "team-workspace",
+  "consulting",
+  "logistics",
+  "renewable-energy",
+  "smart-manufacturing",
+  "ai-recommendations",
+  "nlp-tools",
+  "data-protection",
+  "gdpr-compliance",
+  "cloud-platforms",
+  "business-strategy",
+  "organizational-change",
+  "performance-management",
+  "learning-organization",
+  "knowledge-champion",
+  "technical-resources",
+  "framework-development",
+  "process-improvement",
+  "quality-assurance",
+  "compliance-governance",
+  "training-materials",
+  "institutional-memory",
+  "intellectual-capital",
 ];
 
 const EMPLOYEE_COUNT_OPTIONS = [
@@ -92,6 +95,8 @@ export function SignupForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [interestSearch, setInterestSearch] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
@@ -504,35 +509,63 @@ export function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required
-                  className="bg-background"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a strong password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    required
+                    className="bg-background pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Re-enter your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  required
-                  className="bg-background"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter your password"
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    required
+                    className="bg-background pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -752,7 +785,7 @@ export function SignupForm() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search javascript, php, git, etc..."
+                placeholder="Search knowledge-management, digital-transformation, etc..."
                 value={interestSearch}
                 onChange={(e) => setInterestSearch(e.target.value)}
                 className="pl-10 bg-background"

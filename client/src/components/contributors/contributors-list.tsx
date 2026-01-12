@@ -82,7 +82,9 @@ export function ContributorsList({ canManageUsers }: ContributorsListProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-semibold">{contributor.name}</h3>
                     {(contributor.role === "administrator" || contributor.role === "knowledge_champion") && (
-                      <Shield className="h-4 w-4 text-primary" title="Elevated permissions" />
+                      <span title="Elevated permissions">
+                        <Shield className="h-4 w-4 text-primary" />
+                      </span>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{contributor.email}</p>

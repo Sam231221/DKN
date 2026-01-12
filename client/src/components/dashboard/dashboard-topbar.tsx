@@ -3,12 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  FolderOpen,
   Users,
   Award,
   Search,
   Settings,
-  BookOpen,
   TrendingUp,
   Bell,
   Plus,
@@ -25,8 +23,6 @@ interface DashboardTopbarProps {
 
 const navigation = [
   { name: "Explore", href: "/explore", icon: LayoutDashboard },
-  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
-  { name: "Knowledge", href: "/explore/knowledge", icon: BookOpen },
   { name: "Search", href: "/explore/search", icon: Search },
   { name: "Trending", href: "/explore/trending", icon: TrendingUp },
   { name: "Contributors", href: "/explore/contributors", icon: Users },
@@ -90,7 +86,7 @@ export function DashboardTopbar({ user }: DashboardTopbarProps) {
               variant="ghost"
               size="icon"
               className="hidden sm:flex"
-              onClick={() => navigate("/explore/knowledge")}
+              onClick={() => navigate("/explore?create=true")}
             >
               <Plus className="h-5 w-5" />
             </Button>

@@ -81,7 +81,7 @@ const leaderboard = [
   },
 ]
 
-export function LeaderboardList({ currentUserId }: LeaderboardListProps) {
+export function LeaderboardList({ currentUserId: _currentUserId }: LeaderboardListProps) {
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />
     if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />

@@ -12,6 +12,8 @@ import { knowledgeRoutes } from "./routes/knowledge.routes";
 import { repositoryRoutes } from "./routes/repository.routes";
 import { notificationRoutes } from "./routes/notification.routes";
 import { invitationRoutes } from "./routes/invitation.routes";
+import { clientRoutes } from "./routes/client.routes";
+import { projectRoutes } from "./routes/project.routes";
 
 // Load environment variables
 dotenv.config();
@@ -44,6 +46,8 @@ app.use("/api/knowledge", knowledgeRoutes);
 app.use("/api/repositories", repositoryRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/invitations", invitationRoutes);
+app.use("/api/clients", clientRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Error handling
 app.use(notFoundHandler);

@@ -17,7 +17,9 @@ import {
   Lock,
   Search as SearchIcon,
   Shield,
+  Loader2,
 } from "lucide-react";
+import { fetchRepositories, type Repository } from "@/lib/api";
 
 interface User {
   organizationType?: string;
@@ -26,59 +28,13 @@ interface User {
   organizationName?: string;
 }
 
-interface Repository {
-  id: string;
-  repositoryCode?: string;
-  name: string;
-  description: string;
-  storageLocation?: string;
-  encryptionEnabled: boolean;
-  retentionPolicy?: string;
-  searchIndexStatus?: string;
-  itemCount: number;
-  contributors: number;
-  lastUpdated: string;
-  isPublic: boolean;
-}
-
-// Mock data - replace with API call
-// Repositories are persistent storage containers (very few in number, typically 1-3)
-const mockRepositories: Repository[] = [
-  {
-    id: "1",
-    repositoryCode: "REP-GLOBAL-01",
-    name: "Global Knowledge Repository",
-    description: "Primary repository for all organizational knowledge assets",
-    storageLocation: "aws-eu-central-1",
-    encryptionEnabled: true,
-    retentionPolicy: "7 Years",
-    searchIndexStatus: "active",
-    itemCount: 1248,
-    contributors: 124,
-    lastUpdated: "2024-01-03",
-    isPublic: false,
-  },
-  {
-    id: "2",
-    repositoryCode: "REP-ARCHIVE-01",
-    name: "Archive Repository",
-    description: "Long-term storage for archived knowledge items",
-    storageLocation: "aws-us-east-1",
-    encryptionEnabled: true,
-    retentionPolicy: "Indefinite",
-    searchIndexStatus: "active",
-    itemCount: 856,
-    contributors: 89,
-    lastUpdated: "2024-01-02",
-    isPublic: false,
-  },
-];
-
 export default function RepositoriesPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [repositories, setRepositories] = useState<Repository[]>(mockRepositories);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user");
@@ -99,13 +55,33 @@ export default function RepositoriesPage() {
     });
   }, [navigate]);
 
+  useEffect(() => {
+    const loadRepositories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchRepositories();
+        setRepositories(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load repositories");
+        console.error("Error fetching repositories:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      loadRepositories();
+    }
+  }, [user]);
+
   if (!user) return null;
 
   const filteredRepositories = repositories.filter(
     (repo) =>
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (repo.repositoryCode && repo.repositoryCode.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const formatDate = (dateString: string) => {
@@ -117,6 +93,10 @@ export default function RepositoriesPage() {
     if (diffInDays === 1) return "Yesterday";
     if (diffInDays < 7) return `${diffInDays} days ago`;
     return date.toLocaleDateString();
+  };
+
+  const handleRepositoryClick = (repositoryId: string) => {
+    navigate(`/dashboard/repositories/${repositoryId}`);
   };
 
   return (
@@ -180,25 +160,48 @@ export default function RepositoriesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Set(repositories.flatMap((r) => [r.contributors])).size}
+                {repositories.reduce((sum, repo) => sum + (repo.contributorCount || 0), 0)}
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Repositories List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRepositories.length === 0 ? (
-            <Card className="col-span-full">
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No repositories found</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredRepositories.map((repo) => (
-              <Card key={repo.id} className="hover:shadow-md transition-shadow cursor-pointer">
+        {loading ? (
+          <Card className="col-span-full">
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">Loading repositories...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card className="col-span-full">
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <p className="text-destructive mb-2">Error loading repositories</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRepositories.length === 0 ? (
+              <Card className="col-span-full">
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No repositories found</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredRepositories.map((repo) => (
+                <Card 
+                  key={repo.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleRepositoryClick(repo.id)}
+                >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -207,9 +210,6 @@ export default function RepositoriesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-base truncate">{repo.name}</CardTitle>
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {repo.category}
-                        </Badge>
                       </div>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -261,18 +261,18 @@ export default function RepositoriesPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4" />
-                        <span>{repo.itemCount} items</span>
+                        <span>{repo.itemCount || 0} items</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        <span>{repo.contributors}</span>
+                        <span>{repo.contributorCount || 0}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>Updated {formatDate(repo.lastUpdated)}</span>
+                      <span>Updated {formatDate(repo.updatedAt || repo.createdAt)}</span>
                     </div>
                     {repo.isPublic ? (
                       <Badge variant="outline" className="text-xs">
@@ -285,10 +285,11 @@ export default function RepositoriesPage() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </OrganizationDashboardLayout>
   );

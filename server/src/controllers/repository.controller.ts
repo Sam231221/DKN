@@ -20,7 +20,17 @@ export const getRepositories = async (
       status: "success",
       data: allRepositories,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error fetching repositories:", error);
+    // Provide more detailed error information
+    if (error?.message?.includes("does not exist") || error?.code === "42P01") {
+      return next(
+        new AppError(
+          "Repositories table does not exist. Please run database migrations: npm run db:migrate",
+          500
+        )
+      );
+    }
     next(error);
   }
 };
@@ -47,7 +57,16 @@ export const getRepositoryById = async (
       status: "success",
       data: repository,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error fetching repository by ID:", error);
+    if (error?.message?.includes("does not exist") || error?.code === "42P01") {
+      return next(
+        new AppError(
+          "Repositories table does not exist. Please run database migrations: npm run db:migrate",
+          500
+        )
+      );
+    }
     next(error);
   }
 };

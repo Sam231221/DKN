@@ -35,11 +35,12 @@ export function RepositorySelect({
       try {
         setLoading(true);
         setError(null);
-        
-        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
+        const API_BASE_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:3000";
         const token = localStorage.getItem("dkn_token");
-        
-        const response = await fetch(`${API_BASE_URL}/repositories`, {
+
+        const response = await fetch(`${API_BASE_URL}/api/repositories`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -52,7 +53,9 @@ export function RepositorySelect({
         const result = await response.json();
         setRepositories(result.data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load repositories");
+        setError(
+          err instanceof Error ? err.message : "Failed to load repositories"
+        );
         console.error("Error fetching repositories:", err);
       } finally {
         setLoading(false);
@@ -119,4 +122,3 @@ export function RepositorySelect({
     </div>
   );
 }
-

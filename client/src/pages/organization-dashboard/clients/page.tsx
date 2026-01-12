@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Mail, Phone, Building, MoreVertical } from "lucide-react";
+import { Search, Plus, Mail, Phone, Building, MoreVertical, Loader2 } from "lucide-react";
+import { fetchClients, type Client as ClientType } from "@/lib/api";
 
 interface User {
   organizationType?: string;
@@ -48,127 +49,49 @@ interface Client {
   createdAt: string;
 }
 
-// Mock data - replace with API call
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    company: "Acme Corp",
-    phone: "+1 (555) 123-4567",
-    status: "active",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    company: "Tech Solutions Inc",
-    phone: "+1 (555) 234-5678",
-    status: "active",
-    createdAt: "2024-02-20",
-  },
-  {
-    id: "3",
-    name: "Bob Johnson",
-    email: "bob.johnson@example.com",
-    company: "Global Industries",
-    phone: "+1 (555) 345-6789",
-    status: "inactive",
-    createdAt: "2023-12-10",
-  },
-  {
-    id: "4",
-    name: "Alice Williams",
-    email: "alice.williams@example.com",
-    company: "Digital Ventures",
-    phone: "+1 (555) 456-7890",
-    status: "active",
-    createdAt: "2024-03-05",
-  },
-  {
-    id: "5",
-    name: "Charlie Brown",
-    email: "charlie.brown@example.com",
-    company: "Innovation Labs",
-    phone: "+1 (555) 567-8901",
-    status: "active",
-    createdAt: "2024-01-28",
-  },
-  {
-    id: "6",
-    name: "Diana Prince",
-    email: "diana.prince@example.com",
-    company: "Enterprise Solutions",
-    phone: "+1 (555) 678-9012",
-    status: "inactive",
-    createdAt: "2023-11-15",
-  },
-  {
-    id: "7",
-    name: "Edward Norton",
-    email: "edward.norton@example.com",
-    company: "Tech Innovations",
-    phone: "+1 (555) 789-0123",
-    status: "active",
-    createdAt: "2024-02-12",
-  },
-  {
-    id: "8",
-    name: "Fiona Apple",
-    email: "fiona.apple@example.com",
-    company: "Creative Studio",
-    phone: "+1 (555) 890-1234",
-    status: "active",
-    createdAt: "2024-03-18",
-  },
-  {
-    id: "9",
-    name: "George Lucas",
-    email: "george.lucas@example.com",
-    company: "Media Productions",
-    phone: "+1 (555) 901-2345",
-    status: "inactive",
-    createdAt: "2023-10-22",
-  },
-  {
-    id: "10",
-    name: "Helen Mirren",
-    email: "helen.mirren@example.com",
-    company: "Consulting Group",
-    phone: "+1 (555) 012-3456",
-    status: "active",
-    createdAt: "2024-04-01",
-  },
-  {
-    id: "11",
-    name: "Ian McKellen",
-    email: "ian.mckellen@example.com",
-    company: "Strategy Partners",
-    phone: "+1 (555) 123-4568",
-    status: "active",
-    createdAt: "2024-02-25",
-  },
-  {
-    id: "12",
-    name: "Julia Roberts",
-    email: "julia.roberts@example.com",
-    company: "Brand Agency",
-    phone: "+1 (555) 234-5679",
-    status: "inactive",
-    createdAt: "2023-09-30",
-  },
-];
+// Map API client to display client
+const mapClientToDisplay = (client: ClientType): Client => {
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email || "",
+    company: client.industry || undefined,
+    phone: undefined, // Phone not in API yet
+    status: "active", // Default to active, can be enhanced later
+    createdAt: client.createdAt,
+  };
+};
 
 const ITEMS_PER_PAGE = 5;
 
 export default function ClientsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [clients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const loadClients = useCallback(async () => {
+    try {
+      setLoading(true);
+      const fetchedClients = await fetchClients();
+      const mappedClients = fetchedClients.map(mapClientToDisplay);
+      setClients(mappedClients);
+    } catch (error) {
+      console.error("Failed to fetch clients:", error);
+      setClients([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadClients();
+    }
+  }, [user, loadClients]);
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user");
@@ -270,8 +193,16 @@ export default function ClientsPage() {
           </Button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {!loading && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -306,7 +237,8 @@ export default function ClientsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -333,9 +265,10 @@ export default function ClientsPage() {
         </div>
 
         {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
+        {!loading && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
@@ -403,12 +336,13 @@ export default function ClientsPage() {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Pagination */}
-        {totalPages > 0 && (
+        {!loading && totalPages > 0 && (
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Showing {paginatedClients.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}

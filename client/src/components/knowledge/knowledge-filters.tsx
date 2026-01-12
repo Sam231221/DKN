@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search } from "lucide-react"
 
 interface KnowledgeFiltersProps {
-  onTypeChange?: (type: string) => void;
+  onTypeChange?: (type: string | undefined) => void;
   onSearchChange?: (search: string) => void;
   type?: string;
   search?: string;

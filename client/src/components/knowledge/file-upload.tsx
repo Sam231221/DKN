@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, X, File, AlertCircle } from "lucide-react";
+import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

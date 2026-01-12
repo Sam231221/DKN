@@ -6,12 +6,31 @@ import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 export const getUsers = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const allUsers = await db.select({
+    const user = req.user;
+    if (!user) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    // Get user's organization name
+    const [userData] = await db
+      .select({
+        organizationName: users.organizationName,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, user.id));
+
+    if (!userData) {
+      throw new AppError("User not found", 404);
+    }
+
+    // Build query
+    let query = db.select({
       id: users.id,
       email: users.email,
       name: users.name,
@@ -19,8 +38,21 @@ export const getUsers = async (
       avatar: users.avatar,
       points: users.points,
       contributions: users.contributions,
+      organizationName: users.organizationName,
+      organizationType: users.organizationType,
+      hireDate: users.hireDate,
+      region: users.region,
+      industry: users.industry,
+      isActive: users.isActive,
       createdAt: users.createdAt,
     }).from(users);
+
+    // Filter by organization if user is not administrator
+    if (userData.role !== "administrator" && userData.organizationName) {
+      query = query.where(eq(users.organizationName, userData.organizationName)) as any;
+    }
+
+    const allUsers = await query;
 
     res.json({
       status: "success",

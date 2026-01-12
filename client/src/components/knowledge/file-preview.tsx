@@ -1,4 +1,4 @@
-import { FileText, Download, X, AlertCircle } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ export function FilePreview({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
-  const getFileIcon = (fileName: string, fileType?: string) => {
+  const getFileIcon = (fileName: string) => {
     const ext = fileName.split(".").pop()?.toLowerCase();
     const iconMap: Record<string, string> = {
       pdf: "📄",
@@ -66,7 +66,7 @@ export function FilePreview({
     <Card className={`p-4 bg-muted/30 ${className || ""}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="text-2xl flex-shrink-0">{getFileIcon(fileName, fileType)}</div>
+          <div className="text-2xl flex-shrink-0">{getFileIcon(fileName)}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm font-medium truncate">{fileName}</p>

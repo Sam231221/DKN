@@ -23,7 +23,7 @@ export function CTASection() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="#demo">Schedule Demo</Link>
+                <a href="#demo">Schedule Demo</a>
               </Button>
             </div>
           </div>

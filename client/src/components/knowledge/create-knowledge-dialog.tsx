@@ -42,11 +42,13 @@ import {
 interface CreateKnowledgeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function CreateKnowledgeDialog({
   open,
   onOpenChange,
+  onSuccess,
 }: CreateKnowledgeDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -69,7 +71,7 @@ export function CreateKnowledgeDialog({
     []
   );
   const [success, setSuccess] = useState(false);
-  const [uploadedItem, setUploadedItem] =
+  const [_uploadedItem, setUploadedItem] =
     useState<UploadKnowledgeItemResponse | null>(null);
 
   // Load projects when dialog opens
@@ -167,6 +169,9 @@ export function CreateKnowledgeDialog({
         setSuccess(false);
         setWarnings([]);
         onOpenChange(false);
+        if (onSuccess) {
+          onSuccess();
+        }
       }, 2000);
     } catch (err) {
       setError(
@@ -200,8 +205,8 @@ export function CreateKnowledgeDialog({
   };
 
   const handleViewSimilarItem = (id: string) => {
-    // Navigate to knowledge item detail page
-    window.open(`/explore/knowledge/${id}`, "_blank");
+    // Note: Detail page navigation removed - items are now shown in explore page
+    console.log("View similar item:", id);
   };
 
   return (

@@ -90,7 +90,9 @@ export function SearchResults({ query }: SearchResultsProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-semibold">{result.title}</h3>
                     {result.validated && (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" title="Validated by Knowledge Champion" />
+                      <span title="Validated by Knowledge Champion">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      </span>
                     )}
                     <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
                       {result.relevance}% match

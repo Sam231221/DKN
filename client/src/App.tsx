@@ -17,13 +17,16 @@ import SearchPage from "@/pages/dashboard/search/page";
 import LeaderboardPage from "@/pages/dashboard/leaderboard/page";
 import SettingsPage from "@/pages/dashboard/settings/page";
 import ContributorsPage from "@/pages/dashboard/contributors/page";
-import KnowledgePage from "@/pages/dashboard/knowledge/page";
+import TrendingPage from "@/pages/dashboard/trending/page";
 import OrganizationDashboardPage from "@/pages/organization-dashboard/page";
 import ClientsPage from "@/pages/organization-dashboard/clients/page";
 import EmployeesPage from "@/pages/organization-dashboard/employees/page";
 import KnowledgeItemsPage from "@/pages/organization-dashboard/knowledge-items/page";
+import KnowledgeItemDetailPage from "@/pages/organization-dashboard/knowledge-items/[id]/page";
 import RepositoriesPage from "@/pages/organization-dashboard/repositories/page";
+import RepositoryDetailPage from "@/pages/organization-dashboard/repositories/detail/page";
 import ProjectsPage from "@/pages/organization-dashboard/projects/page";
+import OrganizationSettingsPage from "@/pages/organization-dashboard/settings/page";
 
 function Home() {
   return (
@@ -52,16 +55,19 @@ export default function App() {
         <Route path="/explore" element={<DashboardPage />} />
         <Route path="/explore/profile" element={<ProfilePage />} />
         <Route path="/explore/search" element={<SearchPage />} />
+        <Route path="/explore/trending" element={<TrendingPage />} />
         <Route path="/explore/leaderboard" element={<LeaderboardPage />} />
         <Route path="/explore/settings" element={<SettingsPage />} />
         <Route path="/explore/contributors" element={<ContributorsPage />} />
-        <Route path="/explore/knowledge" element={<KnowledgePage />} />
         <Route path="/dashboard" element={<OrganizationDashboardPage />} />
         <Route path="/dashboard/clients" element={<ClientsPage />} />
         <Route path="/dashboard/employees" element={<EmployeesPage />} />
         <Route path="/dashboard/projects" element={<ProjectsPage />} />
         <Route path="/dashboard/knowledge-items" element={<KnowledgeItemsPage />} />
+        <Route path="/dashboard/knowledge-items/:id" element={<KnowledgeItemDetailPage />} />
         <Route path="/dashboard/repositories" element={<RepositoriesPage />} />
+        <Route path="/dashboard/repositories/:id" element={<RepositoryDetailPage />} />
+        <Route path="/dashboard/settings" element={<OrganizationSettingsPage />} />
       </Routes>
     </BrowserRouter>
   );

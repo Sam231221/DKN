@@ -2,13 +2,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  FolderOpen,
   Users,
   Award,
   Search,
   Settings,
   LogOut,
-  BookOpen,
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,8 +17,6 @@ interface DashboardSidebarProps {
 
 const navigation = [
   { name: "Explore", href: "/explore", icon: LayoutDashboard },
-  { name: "Repositories", href: "/explore/repositories", icon: FolderOpen },
-  { name: "Knowledge Items", href: "/explore/knowledge", icon: BookOpen },
   { name: "Search", href: "/explore/search", icon: Search },
   { name: "Trending", href: "/explore/trending", icon: TrendingUp },
   { name: "Contributors", href: "/explore/contributors", icon: Users },

@@ -206,10 +206,15 @@ export const signup = async (
 
     // Send verification email
     try {
+      console.log(`📧 Attempting to send verification email to: ${email.toLowerCase()}`);
       await sendVerificationEmail(email.toLowerCase(), emailVerificationToken, firstName);
-    } catch (emailError) {
+      console.log(`✅ Verification email sent successfully to: ${email.toLowerCase()}`);
+    } catch (emailError: any) {
       // Log error but don't fail signup - email can be resent later
-      console.error("Failed to send verification email:", emailError);
+      console.error("❌ Failed to send verification email:", emailError);
+      console.error("   Error message:", emailError?.message);
+      console.error("   Error code:", emailError?.code);
+      console.error("   This won't prevent signup, but user will need to request a new verification email.");
     }
 
     // Fetch user with interests

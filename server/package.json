@@ -13,6 +13,8 @@
     "db:migrate-manual": "tsx src/db/apply-migration-manual.ts",
     "db:apply": "tsx src/db/apply-migration.ts",
     "db:apply-invitations": "tsx src/db/apply-invitations-migration.ts",
+    "db:apply-email-verification": "tsx src/db/apply-email-verification-migration.ts",
+    "db:apply-repositories-columns": "tsx src/db/apply-repositories-columns.ts",
     "db:push": "drizzle-kit push",
     "db:up": "drizzle-kit up",
     "db:studio": "drizzle-kit studio",

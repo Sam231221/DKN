@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,9 @@ import {
   Calendar,
   TrendingUp,
   MoreVertical,
+  Loader2,
 } from "lucide-react";
+import { fetchProjects, type Project as ProjectType } from "@/lib/api";
 
 interface User {
   organizationType?: string;
@@ -59,90 +61,52 @@ interface Project {
   clientSatisfactionScore?: number;
 }
 
-// Mock data - replace with API call
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    projectCode: "PRJ-2024-017",
-    name: "Smart Factory Integration – Siemens DK",
-    clientName: "Siemens Denmark",
-    domain: "Smart Manufacturing",
-    startDate: "2024-02-01",
-    endDate: "2024-06-30",
-    status: "active",
-    leadConsultantName: "Alice Cooper",
-    clientSatisfactionScore: 4.6,
-  },
-  {
-    id: "2",
-    projectCode: "PRJ-2024-015",
-    name: "Cloud Migration Strategy",
-    clientName: "Tech Corp",
-    domain: "Cloud Infrastructure",
-    startDate: "2024-01-15",
-    endDate: "2024-05-31",
-    status: "active",
-    leadConsultantName: "David Wilson",
-    clientSatisfactionScore: 4.8,
-  },
-  {
-    id: "3",
-    projectCode: "PRJ-2023-089",
-    name: "Digital Transformation Initiative",
-    clientName: "Global Industries",
-    domain: "Digital Strategy",
-    startDate: "2023-09-01",
-    endDate: "2024-01-31",
-    status: "completed",
-    leadConsultantName: "Emma Brown",
-    clientSatisfactionScore: 4.7,
-  },
-  {
-    id: "4",
-    projectCode: "PRJ-2024-019",
-    name: "AI Implementation Roadmap",
-    clientName: "Innovation Labs",
-    domain: "Artificial Intelligence",
-    startDate: "2024-03-01",
-    endDate: "2024-08-31",
-    status: "planning",
-    leadConsultantName: "Michael Davis",
-  },
-  {
-    id: "5",
-    projectCode: "PRJ-2024-012",
-    name: "Data Analytics Platform",
-    clientName: "Data Solutions Inc",
-    domain: "Data Analytics",
-    startDate: "2024-01-10",
-    endDate: "2024-07-15",
-    status: "active",
-    leadConsultantName: "Sarah Johnson",
-    clientSatisfactionScore: 4.5,
-  },
-  {
-    id: "6",
-    projectCode: "PRJ-2023-076",
-    name: "Legacy System Modernization",
-    clientName: "Enterprise Solutions",
-    domain: "System Modernization",
-    startDate: "2023-06-01",
-    endDate: "2023-12-31",
-    status: "completed",
-    leadConsultantName: "Robert Taylor",
-    clientSatisfactionScore: 4.4,
-  },
-];
+// Map API project to display project
+const mapProjectToDisplay = (project: ProjectType): Project => {
+  return {
+    id: project.id,
+    projectCode: project.projectCode || undefined,
+    name: project.name,
+    clientName: project.clientName || "Unknown Client",
+    domain: project.domain || undefined,
+    startDate: project.startDate,
+    endDate: project.endDate || undefined,
+    status: project.status as Project["status"],
+    leadConsultantName: project.leadConsultantName || undefined,
+    clientSatisfactionScore: project.clientSatisfactionScore || undefined,
+  };
+};
 
 const ITEMS_PER_PAGE = 5;
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [projects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const loadProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      const fetchedProjects = await fetchProjects();
+      const mappedProjects = fetchedProjects.map(mapProjectToDisplay);
+      setProjects(mappedProjects);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadProjects();
+    }
+  }, [user, loadProjects]);
 
   useEffect(() => {
     const userData = localStorage.getItem("dkn_user");
@@ -265,8 +229,16 @@ export default function ProjectsPage() {
           </Button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {!loading && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -321,7 +293,8 @@ export default function ProjectsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -351,9 +324,10 @@ export default function ProjectsPage() {
         </div>
 
         {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
+        {!loading && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Project Code</TableHead>
@@ -439,12 +413,13 @@ export default function ProjectsPage() {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Pagination */}
-        {totalPages > 0 && (
+        {!loading && totalPages > 0 && (
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Showing {paginatedProjects.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
