@@ -56,7 +56,7 @@ export async function checkCompliance(
       const [region] = await db
         .select()
         .from(regions)
-        .where(eq(regions.name, userRegion))
+        .where(eq(regions.region, userRegion)) // Query by region field, not name
         .limit(1);
 
       if (region) {

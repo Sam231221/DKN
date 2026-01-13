@@ -101,9 +101,10 @@ export function TeamsDropdown({ user }: TeamsDropdownProps) {
         </div>
         <div className="min-w-0 hidden sm:block">
           <p className="text-sm font-medium truncate max-w-[200px]">
-            {selectedTeam.name}
+            {selectedTeam.region 
+              ? `${selectedTeam.name} - ${selectedTeam.region}`
+              : selectedTeam.name}
           </p>
-          <p className="text-xs text-muted-foreground truncate">{selectedTeam.region || "Organization"}</p>
         </div>
         <ChevronDown
           className={cn(
@@ -149,7 +150,11 @@ export function TeamsDropdown({ user }: TeamsDropdownProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{office.name}</p>
+                        <p className="font-medium truncate">
+                          {office.region 
+                            ? `${office.name} - ${office.region}`
+                            : office.name}
+                        </p>
                         {isSelected && (
                           <div className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
                         )}
@@ -160,9 +165,6 @@ export function TeamsDropdown({ user }: TeamsDropdownProps) {
                           <div className="h-2 w-2 rounded-full bg-yellow-500 flex-shrink-0" title="Limited connectivity" />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {office.region || office.name}
-                      </p>
                     </div>
                     {isSelected && (
                       <Check className="h-4 w-4 text-primary flex-shrink-0" />

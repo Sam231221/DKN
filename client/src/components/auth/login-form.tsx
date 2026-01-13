@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { login, type LoginData } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,40 +23,20 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const loginData: LoginData = {
-        email,
-        password,
-      };
-
-      const response = await login(loginData);
-
-      // Store user data and token
-      const user = response.user as typeof response.user & {
-        organizationType?: "individual" | "organizational";
-        organizationName?: string;
-      };
+      await login(email, password);
       
-      localStorage.setItem("dkn_token", response.token);
-      localStorage.setItem(
-        "dkn_user",
-        JSON.stringify({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          avatar: user.avatar,
-          interests: user.interests,
-          organizationType: user.organizationType,
-          organizationName: user.organizationName,
-        })
-      );
-
-      // Redirect based on organization type
-      if (user.organizationType === "organizational") {
-        navigate("/dashboard");
+      // Get user data from localStorage to determine redirect
+      const storedUser = localStorage.getItem("dkn_user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        // Redirect based on organization type
+        if (user.organizationType === "organizational") {
+          navigate("/dashboard");
+        } else {
+          navigate("/explore");
+        }
       } else {
+        // Fallback: redirect to explore if user data not found
         navigate("/explore");
       }
     } catch (err: any) {

@@ -21,7 +21,9 @@ export function RegionFilterToggle() {
         )}
       >
         <MapPin className="h-3 w-3" />
-        {selectedOffice.name}
+        {selectedOffice.region 
+          ? `${selectedOffice.name} - ${selectedOffice.region}`
+          : selectedOffice.name}
       </Badge>
       <Button
         variant="ghost"

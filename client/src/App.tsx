@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Navigation } from "@/components/navigation";
 import { HeroSection } from "@/components/hero-section";
@@ -34,8 +34,30 @@ import OrganizationSearchPage from "@/pages/organization-dashboard/search/page";
 import OrganizationTrendingPage from "@/pages/organization-dashboard/trending/page";
 import OrganizationLeaderboardPage from "@/pages/organization-dashboard/leaderboard/page";
 import OrganizationContributorsPage from "@/pages/organization-dashboard/contributors/page";
+import { Loader2 } from "lucide-react";
 
 function Home() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Redirect authenticated users to their dashboard
+  if (isAuthenticated && user) {
+    if (user.organizationType === "organizational") {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      return <Navigate to="/explore" replace />;
+    }
+  }
+
+  // Show landing page for unauthenticated users
   return (
     <main className="min-h-screen">
       <Navigation />

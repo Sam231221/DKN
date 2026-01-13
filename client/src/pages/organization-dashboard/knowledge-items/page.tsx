@@ -119,7 +119,7 @@ export default function KnowledgeItemsPage() {
             </div>
             <p className="text-muted-foreground mt-1">
               Browse and manage organizational knowledge items
-              {selectedOffice && !isGlobalView && ` • ${selectedOffice.name}`}
+              {selectedOffice && !isGlobalView && ` • ${selectedOffice.region ? `${selectedOffice.name} - ${selectedOffice.region}` : selectedOffice.name}`}
             </p>
           </div>
           <Button onClick={() => setShowCreateDialog(true)}>

@@ -288,7 +288,8 @@ export const regions = pgTable("regions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => createId()),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull().unique(), // Branch name (e.g., "London Office", "Tokyo Office")
+  region: text("region"), // Region name (e.g., "Europe", "Asia", "North America")
   dataProtectionLaws: text("data_protection_laws").array(), // Array of law descriptions
   connectivityStatus: connectivityStatusEnum("connectivity_status")
     .notNull()

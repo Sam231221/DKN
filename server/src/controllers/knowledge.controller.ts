@@ -333,11 +333,11 @@ export const createKnowledgeItem = async (
         if (userData?.regionId) {
           const { regions } = await import("../db/schema");
           const [region] = await db
-            .select({ name: regions.name })
+            .select({ name: regions.name, region: regions.region })
             .from(regions)
             .where(eq(regions.id, userData.regionId))
             .limit(1);
-          userRegionName = region?.name || null;
+          userRegionName = region?.region || region?.name || null; // Use region name, fallback to branch name
         }
       }
       

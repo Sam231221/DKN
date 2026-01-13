@@ -1,10 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
@@ -45,12 +53,27 @@ export function Navigation() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link to="/login">Sign in</Link>
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Invitation only
-            </span>
+            {isAuthenticated && user ? (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to={user.organizationType === "organizational" ? "/dashboard" : "/explore"}>
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button variant="ghost" onClick={handleLogout}>
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Sign in</Link>
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Invitation only
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -91,12 +114,27 @@ export function Navigation() {
               About
             </a>
             <div className="flex flex-col gap-2 pt-4">
-              <Button variant="ghost" asChild className="w-full">
-                <Link to="/login">Sign in</Link>
-              </Button>
-              <p className="text-xs text-center text-muted-foreground px-3">
-                Access by invitation only
-              </p>
+              {isAuthenticated && user ? (
+                <>
+                  <Button variant="ghost" asChild className="w-full">
+                    <Link to={user.organizationType === "organizational" ? "/dashboard" : "/explore"}>
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" onClick={handleLogout} className="w-full">
+                    Sign out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild className="w-full">
+                    <Link to="/login">Sign in</Link>
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground px-3">
+                    Access by invitation only
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

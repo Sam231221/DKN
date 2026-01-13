@@ -50,10 +50,11 @@ export const getAvailableRegionalOffices = async (
     const availableRegions = await query;
 
     // Transform to RegionalOffice format
+    // name is the branch name, region is the region name
     const regionalOffices = availableRegions.map((region) => ({
       id: region.id,
-      name: region.name,
-      region: region.name,
+      name: region.name, // Branch name
+      region: region.region || region.name, // Region name, fallback to name if not set
       connectivityStatus: region.connectivityStatus,
       dataProtectionLaws: region.dataProtectionLaws || [],
     }));
@@ -118,8 +119,8 @@ export const getRegionalOfficeById = async (
 
     const regionalOffice = {
       id: region.id,
-      name: region.name,
-      region: region.name,
+      name: region.name, // Branch name
+      region: region.region || region.name, // Region name, fallback to name if not set
       connectivityStatus: region.connectivityStatus,
       dataProtectionLaws: region.dataProtectionLaws || [],
     };

@@ -18,19 +18,23 @@ dotenv.config();
 // ============================================================================
 
 // Regions data
+// name = branch name, region = region name
 const regionData = [
   {
-    name: "Europe",
+    name: "London Office", // Branch name
+    region: "Europe", // Region name
     dataProtectionLaws: ["GDPR"],
     connectivityStatus: "online" as const,
   },
   {
-    name: "Asia",
+    name: "Tokyo Office", // Branch name
+    region: "Asia", // Region name
     dataProtectionLaws: ["PDPA", "Data Localization Requirements"],
     connectivityStatus: "limited" as const, // As mentioned in case study
   },
   {
-    name: "North America",
+    name: "New York Office", // Branch name
+    region: "North America", // Region name
     dataProtectionLaws: ["CCPA", "State Privacy Laws"],
     connectivityStatus: "online" as const,
   },
@@ -544,19 +548,20 @@ async function seedOrganizational() {
       const [region] = await db
         .insert(regions)
         .values({
-          name: regionInfo.name,
+          name: regionInfo.name, // Branch name
+          region: regionInfo.region, // Region name
           dataProtectionLaws: regionInfo.dataProtectionLaws,
           connectivityStatus: regionInfo.connectivityStatus,
         })
         .returning();
 
       createdRegions.push(region);
-      console.log(`  ✓ Created region: ${regionInfo.name}`);
+      console.log(`  ✓ Created branch: ${regionInfo.name} (${regionInfo.region})`);
     }
 
-    const europeRegion = createdRegions.find((r) => r.name === "Europe")!;
-    const asiaRegion = createdRegions.find((r) => r.name === "Asia")!;
-    const naRegion = createdRegions.find((r) => r.name === "North America")!;
+    const europeRegion = createdRegions.find((r) => r.region === "Europe" || r.name === "London Office")!;
+    const asiaRegion = createdRegions.find((r) => r.region === "Asia" || r.name === "Tokyo Office")!;
+    const naRegion = createdRegions.find((r) => r.region === "North America" || r.name === "New York Office")!;
 
     // ========================================================================
     // STEP 2: Create Velion Dynamics Users
@@ -756,9 +761,9 @@ async function seedOrganizational() {
         .insert(repositories)
         .values({
           name: repoInfo.name,
-          description: `Regional project documentation and knowledge assets for ${repoInfo.region.name} office`,
+          description: `Regional project documentation and knowledge assets for ${repoInfo.region.region || repoInfo.region.name} office`,
           ownerId: regionChampion.id,
-          tags: [repoInfo.region.name, "Projects", "Documentation"],
+          tags: [repoInfo.region.region || repoInfo.region.name, "Projects", "Documentation"],
           itemCount: 0,
           contributorCount: 0,
           isPublic: false,
@@ -816,7 +821,7 @@ async function seedOrganizational() {
     for (const repository of allRepositories) {
       const owner = velionEmployees.find((u) => u.id === repository.ownerId)!;
       const ownerRegion = createdRegions.find((r) => r.id === owner.regionId);
-      const regionName = ownerRegion?.name;
+      const regionName = ownerRegion?.region || ownerRegion?.name; // Use region name, fallback to branch name
 
       // Get projects related to this repository's region or owner
       const relatedProjects = allProjects.filter((p) => {
