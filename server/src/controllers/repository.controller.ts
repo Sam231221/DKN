@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
-import { repositories } from "../db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { repositories, users } from "../db/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -11,10 +11,85 @@ export const getRepositories = async (
   next: NextFunction
 ) => {
   try {
-    const allRepositories = await db
-      .select()
+    const { regionId } = req.query;
+    const user = req.user;
+    
+    if (!user) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    // Get user's region and role
+    const [userData] = await db
+      .select({
+        role: users.role,
+        regionId: users.regionId,
+      })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    if (!userData) {
+      throw new AppError("User not found", 404);
+    }
+
+    // Build query with join to filter by owner's region
+    let query = db
+      .select({
+        id: repositories.id,
+        repositoryCode: repositories.repositoryCode,
+        name: repositories.name,
+        description: repositories.description,
+        ownerId: repositories.ownerId,
+        storageLocation: repositories.storageLocation,
+        encryptionEnabled: repositories.encryptionEnabled,
+        retentionPolicy: repositories.retentionPolicy,
+        searchIndexStatus: repositories.searchIndexStatus,
+        isPublic: repositories.isPublic,
+        tags: repositories.tags,
+        createdAt: repositories.createdAt,
+        updatedAt: repositories.updatedAt,
+      })
       .from(repositories)
-      .orderBy(desc(repositories.createdAt));
+      .leftJoin(users, eq(repositories.ownerId, users.id));
+
+    const conditions = [];
+
+    // Region-based filtering by owner's region
+    if (regionId) {
+      const userRole = userData.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (regionId === "all") {
+        if (!canSeeAllRegions) {
+          return next(new AppError("Access denied: Global view requires elevated permissions", 403));
+        }
+        // Show all repositories - no region filter
+      } else {
+        // Filter by owner's region
+        conditions.push(eq(users.regionId, regionId as string));
+      }
+    } else if (userData.regionId) {
+      // Default to user's region if no regionId specified
+      const userRole = userData.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (!canSeeAllRegions) {
+        conditions.push(eq(users.regionId, userData.regionId));
+      }
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    query = query.orderBy(desc(repositories.createdAt)) as any;
+    const allRepositories = await query;
 
     res.json({
       status: "success",

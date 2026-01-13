@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { LeaderboardList } from "@/components/gamification/leaderboard-list"
 import { AchievementsPanel } from "@/components/gamification/achievements-panel"
@@ -7,17 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Trophy, TrendingUp, Award } from "lucide-react"
 
 export default function LeaderboardPage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      setUser(JSON.parse(userData))
-    }
-  }, [navigate])
+  const { user } = useAuth()
 
   if (!user) return null
 

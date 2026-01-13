@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +33,6 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Mail, Shield, Calendar, MoreVertical, Loader2 } from "lucide-react";
 import { fetchEmployees, type Employee as EmployeeType } from "@/lib/api";
 
-interface User {
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  organizationName?: string;
-}
-
 interface Employee {
   id: string;
   name: string;
@@ -61,15 +55,15 @@ const mapEmployeeToDisplay = (emp: EmployeeType): Employee => {
     name: emp.name,
     email: emp.email,
     role: emp.role,
-    department: emp.region || undefined, // Use region as department for now
+    department: undefined, // Department not available in current schema
     status,
     joinedDate: emp.hireDate || emp.createdAt,
   };
 };
 
 export default function EmployeesPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,7 +74,8 @@ export default function EmployeesPage() {
   const loadEmployees = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedEmployees = await fetchEmployees();
+      const regionId = isGlobalView ? "all" : selectedOffice?.id;
+      const fetchedEmployees = await fetchEmployees({ regionId });
       const mappedEmployees = fetchedEmployees.map(mapEmployeeToDisplay);
       setEmployees(mappedEmployees);
     } catch (error) {
@@ -89,7 +84,7 @@ export default function EmployeesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedOffice, isGlobalView]);
 
   useEffect(() => {
     if (user) {
@@ -97,24 +92,6 @@ export default function EmployeesPage() {
     }
   }, [user, loadEmployees]);
 
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
 
   // Filter and search employees
   const filteredEmployees = useMemo(() => {

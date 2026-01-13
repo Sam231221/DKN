@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,46 +23,22 @@ import {
 } from "lucide-react";
 import { fetchRepositories, type Repository } from "@/lib/api";
 
-interface User {
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  organizationName?: string;
-}
-
 export default function RepositoriesPage() {
+  const { user } = useAuth();
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
-
-  useEffect(() => {
     const loadRepositories = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchRepositories();
+        const regionId = isGlobalView ? "all" : selectedOffice?.id;
+        const data = await fetchRepositories({ regionId });
         setRepositories(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load repositories");
@@ -73,7 +51,7 @@ export default function RepositoriesPage() {
     if (user) {
       loadRepositories();
     }
-  }, [user]);
+  }, [user, selectedOffice, isGlobalView]);
 
   if (!user) return null;
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,8 +81,8 @@ const mapProjectToDisplay = (project: ProjectType): Project => {
 const ITEMS_PER_PAGE = 5;
 
 export default function ProjectsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,7 +92,9 @@ export default function ProjectsPage() {
   const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedProjects = await fetchProjects();
+      // Pass regionId based on selected office or "all" for global view
+      const regionId = isGlobalView ? "all" : selectedOffice?.id;
+      const fetchedProjects = await fetchProjects({ regionId });
       const mappedProjects = fetchedProjects.map(mapProjectToDisplay);
       setProjects(mappedProjects);
     } catch (error) {
@@ -100,32 +103,13 @@ export default function ProjectsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedOffice, isGlobalView]);
 
   useEffect(() => {
     if (user) {
       loadProjects();
     }
   }, [user, loadProjects]);
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
 
   // Filter and search projects
   const filteredProjects = useMemo(() => {

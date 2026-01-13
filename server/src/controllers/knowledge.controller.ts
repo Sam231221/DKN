@@ -31,12 +31,19 @@ export const getKnowledgeItems = async (
   next: NextFunction
 ) => {
   try {
-    const { type, status, search, repositoryId } = req.query;
+    const { type, status, search, repositoryId, regionId } = req.query;
 
-    // Get user's organization name for filtering
+    // Get user's organization name and region for filtering
     let userOrganizationName: string | null = null;
+    let userRegionId: string | null = null;
     if (req.user) {
       userOrganizationName = await getUserOrganizationName(req.user.id);
+      const [userData] = await db
+        .select({ regionId: users.regionId, role: users.role })
+        .from(users)
+        .where(eq(users.id, req.user.id))
+        .limit(1);
+      userRegionId = userData?.regionId || null;
     }
 
     let query = db
@@ -89,13 +96,44 @@ export const getKnowledgeItems = async (
     if (req.user && userOrganizationName) {
       const userRole = req.user.role;
       // Administrators can see all items
-      if (userRole !== "administrator") {
+      if (userRole !== "administrator" && userRole !== "knowledge_champion" && userRole !== "executive_leadership") {
         // Filter by organization name - items created by users in the same organization
         conditions.push(eq(users.organizationName, userOrganizationName));
       }
     } else if (req.user) {
       // If user has no organization, they can only see items from users with no organization
       conditions.push(isNull(users.organizationName));
+    }
+
+    // Region-based filtering
+    if (req.user && regionId) {
+      const userRole = req.user.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (regionId === "all") {
+        // Only admins, knowledge champions, and executive leadership can see all regions
+        if (!canSeeAllRegions) {
+          return next(new AppError("Access denied: Global view requires elevated permissions", 403));
+        }
+        // No region filter applied - show all regions
+      } else {
+        // Filter by specific region using regionId directly
+        conditions.push(eq(users.regionId, regionId as string));
+      }
+    } else if (req.user && userRegionId) {
+      // Default to user's region if no regionId specified
+      const userRole = req.user.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (!canSeeAllRegions) {
+        conditions.push(eq(users.regionId, userRegionId));
+      }
     }
 
     // Type filter with proper enum casting
@@ -283,11 +321,31 @@ export const createKnowledgeItem = async (
     }
 
     try {
+      // Get user's region for compliance check
+      let userRegionName: string | null = null;
+      if (req.user) {
+        const [userData] = await db
+          .select({ regionId: users.regionId })
+          .from(users)
+          .where(eq(users.id, req.user.id))
+          .limit(1);
+        
+        if (userData?.regionId) {
+          const { regions } = await import("../db/schema");
+          const [region] = await db
+            .select({ name: regions.name })
+            .from(regions)
+            .where(eq(regions.id, userData.regionId))
+            .limit(1);
+          userRegionName = region?.name || null;
+        }
+      }
+      
       // Check compliance (async, don't block)
       complianceResult = await checkCompliance(
         title,
         itemContent,
-        (req.user as any).region
+        userRegionName
       );
     } catch (error) {
       console.error("Compliance check error:", error);

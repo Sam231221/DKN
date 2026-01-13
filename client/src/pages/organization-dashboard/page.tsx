@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,36 +13,34 @@ import {
   ExternalLink,
   Github,
   TrendingUp,
-  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock usage data
-const usageMetrics = [
+// Knowledge management metrics aligned with case study
+const knowledgeMetrics = [
   {
-    name: "Image Optimization - Transformations",
-    current: 23,
-    limit: 5000,
-    unit: "",
-    showUpgrade: true,
+    name: "Knowledge Items",
+    current: 1248,
+    total: "Total",
+    icon: "📚",
   },
   {
-    name: "Edge Requests",
-    current: 1500,
-    limit: 1000000,
-    unit: "",
+    name: "Active Contributors",
+    current: 342,
+    total: "Users",
+    icon: "👥",
   },
   {
-    name: "Fluid Active CPU",
-    current: 11,
-    limit: 14400,
-    unit: "s",
+    name: "Projects",
+    current: 87,
+    total: "Active",
+    icon: "💼",
   },
   {
-    name: "Image Optimization - Cache Writes",
-    current: 28,
-    limit: 100000,
-    unit: "",
+    name: "Repositories",
+    current: 12,
+    total: "Total",
+    icon: "📁",
   },
 ];
 
@@ -186,44 +185,11 @@ function ProjectCard({ project }: { project: (typeof mockProjects)[0] }) {
   );
 }
 
-interface User {
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  organizationName?: string;
-}
-
 export default function OrganizationDashboardPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    // Redirect if not organizational account
-    if (parsedUser.organizationType !== "organizational") {
-      console.log(
-        "User organizationType:",
-        parsedUser.organizationType,
-        "Redirecting to /explore"
-      );
-      navigate("/explore");
-      return;
-    }
-
-    // Use requestAnimationFrame to avoid synchronous setState in effect
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
 
   if (!user) return null;
 
@@ -301,54 +267,30 @@ export default function OrganizationDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Usage and Alerts */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Usage Section */}
+            {/* Knowledge Metrics Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Last 30 days</CardTitle>
+                <CardTitle className="text-base">Knowledge Network Overview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {usageMetrics.map((metric, index) => {
-                  const percent = Math.min(
-                    (metric.current / metric.limit) * 100,
-                    100
-                  );
-
+                {knowledgeMetrics.map((metric, index) => {
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {metric.name}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{metric.icon}</span>
+                          <span className="text-muted-foreground">
+                            {metric.name}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
                             {formatNumber(metric.current)}
-                            {metric.unit && ` ${metric.unit}`} /{" "}
-                            {formatNumber(metric.limit)}
-                            {metric.unit && ` ${metric.unit}`}
                           </span>
-                          {metric.showUpgrade && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 text-xs"
-                            >
-                              Upgrade
-                            </Button>
-                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {metric.total}
+                          </span>
                         </div>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            percent > 80
-                              ? "bg-red-500"
-                              : percent > 50
-                              ? "bg-yellow-500"
-                              : "bg-primary"
-                          )}
-                          style={{ width: `${percent}%` }}
-                        />
                       </div>
                     </div>
                   );
@@ -356,22 +298,21 @@ export default function OrganizationDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Alerts Section */}
+            {/* Connect to Grow Program Section */}
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-6">
                 <div className="space-y-3">
-                  <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium mb-1">
-                      Get alerted for anomalies
+                      Connect to Grow Program
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Automatically monitor your projects for anomalies and get
-                      notified.
+                      Participate in knowledge sharing, contribute content, and validate knowledge items to support organizational learning.
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Upgrade to Observability Plus
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/dashboard/leaderboard")}>
+                    View Leaderboard
                   </Button>
                 </div>
               </CardContent>

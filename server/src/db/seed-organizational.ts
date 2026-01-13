@@ -5,67 +5,317 @@ import {
   projects,
   repositories,
   knowledgeItems,
+  regions,
 } from "./schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
-// Sample data arrays for generating realistic content
-const organizationNames = [
-  "TechCorp Solutions",
-  "Global Innovations Inc",
-  "Digital Dynamics Ltd",
-  "Enterprise Systems Group",
-  "Cloud Services Co",
-  "Data Analytics Pro",
-  "Software Solutions Hub",
-  "Business Intelligence Corp",
-  "Innovation Labs",
-  "Strategic Consulting Group",
+// ============================================================================
+// REALISTIC DATA FOR VELION DYNAMICS
+// ============================================================================
+
+// Regions data
+const regionData = [
+  {
+    name: "Europe",
+    dataProtectionLaws: ["GDPR"],
+    connectivityStatus: "online" as const,
+  },
+  {
+    name: "Asia",
+    dataProtectionLaws: ["PDPA", "Data Localization Requirements"],
+    connectivityStatus: "limited" as const, // As mentioned in case study
+  },
+  {
+    name: "North America",
+    dataProtectionLaws: ["CCPA", "State Privacy Laws"],
+    connectivityStatus: "online" as const,
+  },
+];
+
+// Velion Dynamics user data - realistic names by region
+const velionUsers = {
+  europe: [
+    {
+      firstName: "Sarah",
+      lastName: "Johnson",
+      role: "administrator" as const,
+      email: "sarah.johnson@velion.com",
+    },
+    {
+      firstName: "Michael",
+      lastName: "Andersen",
+      role: "knowledge_champion" as const,
+      email: "michael.andersen@velion.com",
+    },
+    {
+      firstName: "Emma",
+      lastName: "Larsen",
+      role: "consultant" as const,
+      email: "emma.larsen@velion.com",
+    },
+    {
+      firstName: "Thomas",
+      lastName: "Hansen",
+      role: "consultant" as const,
+      email: "thomas.hansen@velion.com",
+    },
+    {
+      firstName: "Sophie",
+      lastName: "Nielsen",
+      role: "consultant" as const,
+      email: "sophie.nielsen@velion.com",
+    },
+    {
+      firstName: "Lucas",
+      lastName: "Pedersen",
+      role: "consultant" as const,
+      email: "lucas.pedersen@velion.com",
+    },
+    {
+      firstName: "Anna",
+      lastName: "Christensen",
+      role: "employee" as const,
+      email: "anna.christensen@velion.com",
+    },
+    {
+      firstName: "Oliver",
+      lastName: "Jensen",
+      role: "consultant" as const,
+      email: "oliver.jensen@velion.com",
+    },
+    {
+      firstName: "Isabella",
+      lastName: "Madsen",
+      role: "consultant" as const,
+      email: "isabella.madsen@velion.com",
+    },
+    {
+      firstName: "Noah",
+      lastName: "Rasmussen",
+      role: "consultant" as const,
+      email: "noah.rasmussen@velion.com",
+    },
+  ],
+  asia: [
+    {
+      firstName: "Wei",
+      lastName: "Chen",
+      role: "knowledge_champion" as const,
+      email: "wei.chen@velion.com",
+    },
+    {
+      firstName: "Li",
+      lastName: "Wang",
+      role: "consultant" as const,
+      email: "li.wang@velion.com",
+    },
+    {
+      firstName: "Yuki",
+      lastName: "Tanaka",
+      role: "consultant" as const,
+      email: "yuki.tanaka@velion.com",
+    },
+    {
+      firstName: "Raj",
+      lastName: "Kumar",
+      role: "consultant" as const,
+      email: "raj.kumar@velion.com",
+    },
+    {
+      firstName: "Priya",
+      lastName: "Sharma",
+      role: "consultant" as const,
+      email: "priya.sharma@velion.com",
+    },
+    {
+      firstName: "Min",
+      lastName: "Park",
+      role: "consultant" as const,
+      email: "min.park@velion.com",
+    },
+    {
+      firstName: "Hiroshi",
+      lastName: "Yamamoto",
+      role: "consultant" as const,
+      email: "hiroshi.yamamoto@velion.com",
+    },
+    {
+      firstName: "Mei",
+      lastName: "Zhang",
+      role: "employee" as const,
+      email: "mei.zhang@velion.com",
+    },
+    {
+      firstName: "Anjali",
+      lastName: "Patel",
+      role: "consultant" as const,
+      email: "anjali.patel@velion.com",
+    },
+    {
+      firstName: "Kenji",
+      lastName: "Sato",
+      role: "consultant" as const,
+      email: "kenji.sato@velion.com",
+    },
+  ],
+  northAmerica: [
+    {
+      firstName: "David",
+      lastName: "Martinez",
+      role: "administrator" as const,
+      email: "david.martinez@velion.com",
+    },
+    {
+      firstName: "Jennifer",
+      lastName: "Williams",
+      role: "knowledge_champion" as const,
+      email: "jennifer.williams@velion.com",
+    },
+    {
+      firstName: "James",
+      lastName: "Brown",
+      role: "consultant" as const,
+      email: "james.brown@velion.com",
+    },
+    {
+      firstName: "Emily",
+      lastName: "Davis",
+      role: "consultant" as const,
+      email: "emily.davis@velion.com",
+    },
+    {
+      firstName: "Robert",
+      lastName: "Miller",
+      role: "consultant" as const,
+      email: "robert.miller@velion.com",
+    },
+    {
+      firstName: "Jessica",
+      lastName: "Wilson",
+      role: "consultant" as const,
+      email: "jessica.wilson@velion.com",
+    },
+    {
+      firstName: "Michael",
+      lastName: "Moore",
+      role: "consultant" as const,
+      email: "michael.moore@velion.com",
+    },
+    {
+      firstName: "Amanda",
+      lastName: "Taylor",
+      role: "employee" as const,
+      email: "amanda.taylor@velion.com",
+    },
+    {
+      firstName: "Christopher",
+      lastName: "Anderson",
+      role: "consultant" as const,
+      email: "christopher.anderson@velion.com",
+    },
+    {
+      firstName: "Michelle",
+      lastName: "Thomas",
+      role: "consultant" as const,
+      email: "michelle.thomas@velion.com",
+    },
+  ],
+};
+
+// External client data - industries from case study
+const clientIndustries = [
+  "Logistics",
+  "Renewable Energy",
+  "Smart Manufacturing",
+  "Logistics",
+  "Renewable Energy",
+  "Smart Manufacturing",
+  "Logistics",
+  "Renewable Energy",
+  "Smart Manufacturing",
+  "Logistics",
+  "Renewable Energy",
+  "Smart Manufacturing",
+  "Logistics",
+  "Renewable Energy",
+  "Smart Manufacturing",
 ];
 
 const clientNames = [
-  "Acme Corporation",
-  "Beta Industries",
-  "Gamma Systems",
-  "Delta Technologies",
-  "Epsilon Solutions",
-  "Zeta Enterprises",
-  "Eta Manufacturing",
-  "Theta Services",
-  "Iota Consulting",
-  "Kappa Holdings",
+  "Nordic Logistics Solutions",
+  "Green Energy Partners",
+  "SmartFactory Systems",
+  "European Transport Group",
+  "SolarTech Industries",
+  "Advanced Manufacturing Co",
+  "Global Shipping Network",
+  "WindPower Solutions",
+  "Industrial Automation Ltd",
+  "Supply Chain Dynamics",
+  "Clean Energy Ventures",
+  "Precision Manufacturing Inc",
+  "Cargo Express International",
+  "Renewable Resources Group",
+  "Digital Factory Solutions",
+  "Logistics Pro",
+  "EcoPower Systems",
+  "Smart Production Technologies",
+  "Freight Management Corp",
+  "Sustainable Energy Partners",
 ];
 
-const industries = [
-  "Technology",
-  "Manufacturing",
-  "Healthcare",
-  "Finance",
-  "Retail",
-  "Education",
-  "Energy",
-  "Telecommunications",
-  "Transportation",
-  "Real Estate",
-];
-
-const projectDomains = [
-  "Smart Manufacturing",
+// Project types from case study
+const projectTypes = [
   "Digital Transformation",
+  "IT Integration",
   "Cloud Migration",
-  "Data Analytics",
-  "AI/ML Implementation",
-  "IoT Integration",
-  "Cybersecurity",
+  "Smart Manufacturing Implementation",
+  "Logistics Optimization",
+  "Renewable Energy Integration",
   "Process Automation",
-  "Customer Experience",
-  "Supply Chain Optimization",
+  "Data Analytics Implementation",
+  "IoT Integration",
+  "Supply Chain Digitalization",
 ];
 
 const projectStatuses = ["planning", "active", "on_hold", "completed"] as const;
+const statusDistribution = {
+  active: 0.4,
+  completed: 0.3,
+  planning: 0.2,
+  on_hold: 0.1,
+};
+
+// Repository names are defined inline where used
+
+// Knowledge item titles aligned with case study
+const knowledgeItemTitles = [
+  "Digital Transformation Framework for Logistics",
+  "Renewable Energy Integration Best Practices",
+  "Smart Manufacturing Implementation Guide",
+  "Cross-Office Collaboration Protocols",
+  "GDPR Compliance Checklist",
+  "Data Localization Requirements in Asian Markets",
+  "Cloud Migration Strategy",
+  "IT Integration Best Practices",
+  "Process Automation Guidelines",
+  "Supply Chain Digitalization Framework",
+  "Client Onboarding Process",
+  "Project Management Methodology",
+  "Knowledge Sharing Protocols",
+  "Regional Data Protection Compliance",
+  "Cross-Functional Team Collaboration",
+  "Technical Documentation Standards",
+  "Training Program for New Consultants",
+  "Quality Assurance Procedures",
+  "Client Communication Best Practices",
+  "Project Delivery Framework",
+];
+
 const knowledgeTypes = [
   "documentation",
   "best_practices",
@@ -77,500 +327,589 @@ const knowledgeTypes = [
   "policy",
   "guideline",
 ] as const;
+
 const knowledgeStatuses = ["draft", "pending_review", "approved"] as const;
-const accessLevels = ["public", "internal", "confidential"] as const;
 
-const repositoryNames = [
-  "Technical Documentation",
-  "Best Practices Library",
-  "Project Knowledge Base",
-  "Training Materials",
-  "Client Resources",
-  "Policy & Guidelines",
-  "Process Documentation",
-  "Research & Development",
-];
-
-const knowledgeItemTitles = [
-  "Implementation Guide",
-  "Best Practices Documentation",
-  "Technical Specifications",
-  "User Manual",
-  "Training Materials",
-  "Process Workflow",
-  "Troubleshooting Guide",
-  "API Documentation",
-  "Security Guidelines",
-  "Deployment Procedures",
-];
-
-const knowledgeItemDescriptions = [
-  "Comprehensive guide covering all aspects",
-  "Detailed documentation for reference",
-  "Step-by-step instructions and procedures",
-  "Best practices and recommendations",
-  "Technical reference material",
-  "Training and educational content",
-  "Operational procedures and guidelines",
-];
-
-// Helper function to get random element from array
+// Helper functions
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-// Helper function to get random number between min and max (inclusive)
 function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Helper function to generate date
 function getRandomDate(start: Date, end: Date): Date {
   return new Date(
     start.getTime() + Math.random() * (end.getTime() - start.getTime())
   );
 }
 
-// Helper function to generate project code
+function getProjectStatus(): (typeof projectStatuses)[number] {
+  const rand = Math.random();
+  if (rand < statusDistribution.active) return "active";
+  if (rand < statusDistribution.active + statusDistribution.completed)
+    return "completed";
+  if (
+    rand <
+    statusDistribution.active +
+      statusDistribution.completed +
+      statusDistribution.planning
+  )
+    return "planning";
+  return "on_hold";
+}
+
 function generateProjectCode(index: number): string {
   const year = new Date().getFullYear();
   return `PRJ-${year}-${String(index).padStart(3, "0")}`;
 }
 
-// Helper function to generate repository code
-function generateRepositoryCode(orgIndex: number, repoIndex: number): string {
-  return `REP-ORG${String(orgIndex).padStart(2, "0")}-${String(
-    repoIndex
-  ).padStart(2, "0")}`;
-}
-
-// Helper function to generate knowledge item content
-function generateKnowledgeItemContent(
+function generateKnowledgeContent(
   title: string,
-  type: (typeof knowledgeTypes)[number]
+  type: (typeof knowledgeTypes)[number],
+  region?: string
 ): string {
+  const regionContext = region
+    ? `\n\n## Regional Considerations\nThis document applies to the ${region} region. Please ensure compliance with local data protection laws and regulations.`
+    : "";
+
   const baseContent = `# ${title}
 
 ## Overview
-This document provides comprehensive information about ${title.toLowerCase()}.
+This document provides comprehensive guidance for Velion Dynamics consultants working on ${title.toLowerCase()}. It has been developed based on our experience delivering successful projects across multiple regions.
 
-## Key Points
-- Important concept or procedure
-- Best practices and recommendations
-- Implementation details
-- Common use cases
+## Key Principles
+- Focus on client value and outcomes
+- Ensure compliance with regional regulations
+- Promote knowledge sharing across offices
+- Maintain high quality standards
+- Foster cross-functional collaboration
 
-## Details
-This section contains detailed information relevant to the topic.
+## Implementation Guidelines
+1. **Planning Phase**
+   - Assess client requirements
+   - Identify regional compliance needs
+   - Allocate appropriate resources
+   - Set clear milestones
 
-## Conclusion
-Summary and next steps.`;
+2. **Execution Phase**
+   - Follow established best practices
+   - Document decisions and changes
+   - Communicate regularly with stakeholders
+   - Monitor progress and adjust as needed
+
+3. **Completion Phase**
+   - Conduct project review
+   - Document lessons learned
+   - Update knowledge base
+   - Share insights with team
+
+## Best Practices
+- Always consult with Knowledge Champions for guidance
+- Leverage existing knowledge items before creating new ones
+- Validate content before publishing
+- Update documentation regularly${regionContext}
+
+## Related Resources
+- Global Knowledge Repository
+- Best Practices Library
+- Regional Office Documentation
+
+## Contact
+For questions or clarifications, contact your regional Knowledge Champion or the DKN support team.`;
 
   if (type === "technical") {
     return `${baseContent}
 
 ## Technical Specifications
-- Architecture details
-- Integration points
-- Performance considerations
-- Security requirements`;
+- Architecture requirements
+- Integration points and APIs
+- Performance benchmarks
+- Security considerations
+- Scalability guidelines`;
   } else if (type === "procedure") {
     return `${baseContent}
 
 ## Step-by-Step Process
-1. Initial setup
-2. Configuration
-3. Execution
-4. Verification
-5. Completion`;
+1. **Preparation**
+   - Gather required information
+   - Review relevant documentation
+   - Prepare necessary tools
+
+2. **Execution**
+   - Follow each step carefully
+   - Document any deviations
+   - Verify intermediate results
+
+3. **Verification**
+   - Validate outcomes
+   - Check compliance requirements
+   - Obtain necessary approvals
+
+4. **Completion**
+   - Finalize documentation
+   - Archive project materials
+   - Update knowledge base`;
   } else if (type === "training") {
     return `${baseContent}
 
 ## Learning Objectives
-- Understand key concepts
-- Apply knowledge in practice
-- Evaluate outcomes
+By the end of this training, participants will:
+- Understand key concepts and principles
+- Apply knowledge in practical scenarios
+- Evaluate outcomes and make improvements
+- Contribute to organizational learning
 
 ## Training Modules
-- Module 1: Introduction
-- Module 2: Core Concepts
-- Module 3: Advanced Topics`;
+- **Module 1: Introduction**
+  - Overview of concepts
+  - Key terminology
+  - Context and background
+
+- **Module 2: Core Concepts**
+  - Detailed explanations
+  - Examples and case studies
+  - Hands-on exercises
+
+- **Module 3: Advanced Topics**
+  - Complex scenarios
+  - Best practices
+  - Troubleshooting
+
+## Assessment
+- Knowledge check quizzes
+- Practical exercises
+- Case study analysis`;
+  } else if (type === "best_practices") {
+    return `${baseContent}
+
+## Recommended Approaches
+- Follow industry standards
+- Leverage proven methodologies
+- Adapt to specific contexts
+- Continuously improve processes
+
+## Common Pitfalls to Avoid
+- Rushing through planning phase
+- Ignoring regional compliance
+- Failing to document decisions
+- Not leveraging existing knowledge
+
+## Success Factors
+- Strong client communication
+- Cross-office collaboration
+- Knowledge sharing culture
+- Continuous learning mindset`;
   }
 
   return baseContent;
 }
 
+// ============================================================================
+// MAIN SEEDING FUNCTION
+// ============================================================================
+
 async function seedOrganizational() {
   try {
-    console.log("🌱 Starting organizational user seeding...");
+    console.log("🌱 Starting Velion Dynamics database seeding...");
+    console.log(
+      "📋 This will create realistic data aligned with the case study\n"
+    );
 
     const hashedPassword = await bcrypt.hash("password123", 10);
-    const organizationalUsers: (typeof users.$inferSelect)[] = [];
-    const allClients: (typeof clients.$inferSelect)[] = [];
+    const createdRegions: (typeof regions.$inferSelect)[] = [];
+    const velionEmployees: (typeof users.$inferSelect)[] = [];
+    const externalClients: (typeof clients.$inferSelect)[] = [];
     const allProjects: (typeof projects.$inferSelect)[] = [];
     const allRepositories: (typeof repositories.$inferSelect)[] = [];
 
-    // Step 1: Create 10 Organizational Users
-    console.log("📝 Creating 10 organizational users...");
-    for (let i = 0; i < 10; i++) {
-      const email = `org${i + 1}@example.com`;
-      const existingUser = await db
+    // ========================================================================
+    // STEP 1: Create Regions
+    // ========================================================================
+    console.log("🌍 Step 1: Creating regions...");
+    for (const regionInfo of regionData) {
+      const existingRegion = await db
         .select()
-        .from(users)
-        .where(eq(users.email, email))
+        .from(regions)
+        .where(eq(regions.name, regionInfo.name))
         .limit(1);
 
-      if (existingUser.length > 0) {
-        console.log(`  ✓ User ${email} already exists, skipping...`);
-        organizationalUsers.push(existingUser[0]);
+      if (existingRegion.length > 0) {
+        createdRegions.push(existingRegion[0]);
+        console.log(`  ✓ Region "${regionInfo.name}" already exists`);
         continue;
       }
 
-      const orgUser = await db
-        .insert(users)
+      const [region] = await db
+        .insert(regions)
         .values({
-          email,
-          password: hashedPassword,
-          name: `${organizationNames[i]} Admin`,
-          organizationType: "organizational",
-          organizationName: organizationNames[i],
-          role: i % 2 === 0 ? "administrator" : "employee",
-          industry: getRandomElement(industries),
-          employeeCount: getRandomElement([
-            "11-50",
-            "51-200",
-            "201-500",
-            "501-1000",
-          ]),
-          points: getRandomInt(100, 1000),
-          contributions: getRandomInt(10, 100),
-          isActive: true,
+          name: regionInfo.name,
+          dataProtectionLaws: regionInfo.dataProtectionLaws,
+          connectivityStatus: regionInfo.connectivityStatus,
         })
         .returning();
 
-      organizationalUsers.push(orgUser[0]);
-      console.log(`  ✓ Created organizational user: ${email}`);
+      createdRegions.push(region);
+      console.log(`  ✓ Created region: ${regionInfo.name}`);
     }
 
-    // Step 2: For each organizational user, create 10 clients
-    console.log("📝 Creating clients for each organizational user...");
-    for (let orgIndex = 0; orgIndex < organizationalUsers.length; orgIndex++) {
-      const orgUser = organizationalUsers[orgIndex];
+    const europeRegion = createdRegions.find((r) => r.name === "Europe")!;
+    const asiaRegion = createdRegions.find((r) => r.name === "Asia")!;
+    const naRegion = createdRegions.find((r) => r.name === "North America")!;
 
-      for (let clientIndex = 0; clientIndex < 10; clientIndex++) {
-        const clientName = `${getRandomElement(clientNames)} ${
-          clientIndex + 1
-        }`;
-        const existingClient = await db
+    // ========================================================================
+    // STEP 2: Create Velion Dynamics Users
+    // ========================================================================
+    console.log("\n👥 Step 2: Creating Velion Dynamics employees...");
+
+    // Create users by region
+    const regionUsers = [
+      { users: velionUsers.europe, region: europeRegion },
+      { users: velionUsers.asia, region: asiaRegion },
+      { users: velionUsers.northAmerica, region: naRegion },
+    ];
+
+    for (const { users: regionUserList, region } of regionUsers) {
+      for (const userInfo of regionUserList) {
+        const existingUser = await db
           .select()
-          .from(clients)
-          .where(
-            and(eq(clients.name, clientName), eq(clients.userId, orgUser.id))
-          )
+          .from(users)
+          .where(eq(users.email, userInfo.email))
           .limit(1);
 
-        if (existingClient.length > 0) {
-          allClients.push(existingClient[0]);
+        if (existingUser.length > 0) {
+          velionEmployees.push(existingUser[0]);
           continue;
         }
 
-        const client = await db
-          .insert(clients)
+        // Calculate points and contributions based on role
+        let points = 500;
+        let contributions = 20;
+        if (userInfo.role === "administrator") {
+          points = getRandomInt(2500, 3000);
+          contributions = getRandomInt(140, 180);
+        } else if (userInfo.role === "knowledge_champion") {
+          points = getRandomInt(2000, 2500);
+          contributions = getRandomInt(100, 150);
+        } else if (userInfo.role === "consultant") {
+          points = getRandomInt(1000, 2000);
+          contributions = getRandomInt(50, 100);
+        } else if (userInfo.role === "employee") {
+          points = getRandomInt(500, 1000);
+          contributions = getRandomInt(20, 50);
+        }
+
+        const [user] = await db
+          .insert(users)
           .values({
-            name: clientName,
-            industry: getRandomElement(industries),
-            userId: orgUser.id,
+            email: userInfo.email,
+            password: hashedPassword,
+            username: `${userInfo.firstName.toLowerCase()}.${userInfo.lastName.toLowerCase()}`,
+            name: `${userInfo.firstName} ${userInfo.lastName}`,
+            firstName: userInfo.firstName,
+            lastName: userInfo.lastName,
+            organizationType: "organizational",
+            organizationName: "Velion Dynamics",
+            role: userInfo.role,
+            regionId: region.id,
+            points,
+            contributions,
+            isActive: true,
+            emailVerified: true,
+            hireDate: getRandomDate(
+              new Date(2019, 0, 1),
+              new Date(2023, 11, 31)
+            )
+              .toISOString()
+              .split("T")[0],
           })
           .returning();
 
-        allClients.push(client[0]);
-      }
-      console.log(`  ✓ Created 10 clients for user ${orgUser.email}`);
-    }
-
-    // Step 3: For each client, create 2-3 projects
-    console.log("📝 Creating projects for each client...");
-    for (const client of allClients) {
-      const numProjects = getRandomInt(2, 3); // Randomly 2 or 3 projects
-
-      for (let i = 0; i < numProjects; i++) {
-        const projectName = `${getRandomElement(projectDomains)} - ${
-          client.name
-        }`;
-
-        const startDate = getRandomDate(
-          new Date(2023, 0, 1),
-          new Date(2024, 11, 31)
-        );
-        const endDate = getRandomDate(startDate, new Date(2025, 11, 31));
-
-        // Find the organizational user who owns this client
-        const orgUser = organizationalUsers.find(
-          (u) => u.id === client.userId
-        )!;
-
-        // Insert project (skip duplicate check since projectCode column may not exist)
-        const project = await db
-          .insert(projects)
-          .values({
-            name: projectName,
-            clientId: client.id,
-            domain: getRandomElement(projectDomains),
-            startDate: startDate.toISOString().split("T")[0],
-            endDate: endDate.toISOString().split("T")[0],
-            status: getRandomElement(projectStatuses),
-            leadConsultantId: orgUser.id,
-            clientSatisfactionScore: getRandomInt(3, 5),
-          })
-          .returning();
-
-        allProjects.push(project[0]);
+        velionEmployees.push(user);
       }
     }
-    console.log(`  ✓ Created ${allProjects.length} projects`);
 
-    // Step 4: For each organizational user, create 3-4 repositories
-    console.log("📝 Creating repositories for each organizational user...");
-    for (let orgIndex = 0; orgIndex < organizationalUsers.length; orgIndex++) {
-      const orgUser = organizationalUsers[orgIndex];
-      const numRepos = getRandomInt(3, 4); // Randomly 3 or 4 repositories
-
-      for (let repoIndex = 0; repoIndex < numRepos; repoIndex++) {
-        const repoName = `${getRandomElement(repositoryNames)} - ${
-          orgUser.organizationName
-        }`;
-
-        // Insert repository (skip duplicate check since repositoryCode column may not exist)
-        const repository = await db
-          .insert(repositories)
-          .values({
-            name: repoName,
-            description: `Repository for ${
-              orgUser.organizationName
-            } containing ${getRandomElement(repositoryNames).toLowerCase()}`,
-            ownerId: orgUser.id,
-            tags: [
-              getRandomElement(industries),
-              getRandomElement(["Documentation", "Knowledge", "Resources"]),
-            ],
-            itemCount: 0,
-            contributorCount: 0,
-            isPublic: false,
-            encryptionEnabled: true,
-            searchIndexStatus: "active",
-          })
-          .returning();
-
-        allRepositories.push(repository[0]);
-      }
-      console.log(
-        `  ✓ Created ${numRepos} repositories for user ${orgUser.email}`
-      );
-    }
-
-    // Step 5: For each repository, create minimum 6 knowledge items
-    console.log("📝 Creating knowledge items for each repository...");
-    let knowledgeItemCount = 0;
-    for (const repository of allRepositories) {
-      // Find the organizational user who owns this repository
-      const orgUser = organizationalUsers.find(
-        (u) => u.id === repository.ownerId
-      )!;
-
-      // Get all projects owned by this organizational user (through their clients)
-      const userProjects = allProjects.filter((p) => {
-        const projectClient = allClients.find((c) => c.id === p.clientId);
-        return projectClient?.userId === orgUser.id;
-      });
-
-      // Create at least 6 knowledge items per repository
-      const numItems = getRandomInt(6, 10); // Minimum 6, up to 10
-
-      for (let i = 0; i < numItems; i++) {
-        const type = getRandomElement(knowledgeTypes);
-        const title = `${getRandomElement(knowledgeItemTitles)} - ${
-          repository.name
-        }`;
-        const description = getRandomElement(knowledgeItemDescriptions);
-        const originatingProject =
-          userProjects.length > 0 ? getRandomElement(userProjects) : null;
-
-        const knowledgeItem = await db
-          .insert(knowledgeItems)
-          .values({
-            title,
-            description,
-            content: generateKnowledgeItemContent(title, type),
-            type,
-            repositoryId: repository.id,
-            authorId: orgUser.id,
-            originatingProjectId: originatingProject?.id || null,
-            status: getRandomElement(knowledgeStatuses),
-            accessLevel: getRandomElement(accessLevels),
-            tags: [
-              getRandomElement(industries),
-              type,
-              getRandomElement(["Important", "Reference", "Guide"]),
-            ],
-            views: getRandomInt(0, 500),
-            likes: getRandomInt(0, 50),
-            isPublished: Math.random() > 0.3, // 70% published
-            lifecycleStatus: getRandomElement([
-              "draft",
-              "approved",
-              "archived",
-            ]),
-          })
-          .returning();
-
-        knowledgeItemCount++;
-      }
-    }
     console.log(
-      `  ✓ Created ${knowledgeItemCount} knowledge items for repositories`
+      `  ✓ Created ${velionEmployees.length} Velion Dynamics employees`
     );
 
-    // Step 6: Create individual users (5 users)
-    console.log("📝 Creating individual users...");
-    const individualUsers: (typeof users.$inferSelect)[] = [];
-    for (let i = 0; i < 5; i++) {
-      const email = `individual${i + 1}@example.com`;
-      const existingUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+    // ========================================================================
+    // STEP 3: Create External Clients
+    // ========================================================================
+    console.log("\n🏢 Step 3: Creating external clients...");
 
-      if (existingUser.length > 0) {
-        console.log(`  ✓ User ${email} already exists, skipping...`);
-        individualUsers.push(existingUser[0]);
-        continue;
-      }
+    const consultants = velionEmployees.filter((u) => u.role === "consultant");
 
-      const individualUser = await db
-        .insert(users)
+    for (let i = 0; i < clientNames.length; i++) {
+      const clientName = clientNames[i];
+      const industry = clientIndustries[i % clientIndustries.length];
+
+      // Assign client to a region (distribute evenly)
+      const clientRegion = [europeRegion, asiaRegion, naRegion][i % 3];
+      // Assign to a consultant
+      const consultant = consultants[i % consultants.length];
+
+      const [client] = await db
+        .insert(clients)
         .values({
-          email,
-          password: hashedPassword,
-          name: `Individual User ${i + 1}`,
-          firstName: `User${i + 1}`,
-          lastName: `Individual`,
-          organizationType: "individual",
-          role: getRandomElement(["employee", "consultant", "client"]),
-          points: getRandomInt(50, 500),
-          contributions: getRandomInt(5, 50),
-          isActive: true,
+          name: clientName,
+          industry,
+          regionId: clientRegion.id,
+          userId: consultant.id,
         })
         .returning();
 
-      individualUsers.push(individualUser[0]);
-      console.log(`  ✓ Created individual user: ${email}`);
+      externalClients.push(client);
     }
 
-    // Step 7: For each individual user, create 10 knowledge items
-    console.log("📝 Creating knowledge items for individual users...");
-    let individualKnowledgeItemCount = 0;
+    console.log(`  ✓ Created ${externalClients.length} external clients`);
 
-    // Ensure we have repositories available (use created ones or query existing)
-    let availableRepositories =
-      allRepositories.length > 0
-        ? allRepositories
-        : await db.select().from(repositories).limit(100);
+    // ========================================================================
+    // STEP 4: Create Projects
+    // ========================================================================
+    console.log("\n📁 Step 4: Creating projects...");
 
-    // If still no repositories, create a default one for individual users
-    if (availableRepositories.length === 0 && individualUsers.length > 0) {
-      console.log(
-        "  ⚠️  No repositories found, creating default repository for individual users..."
-      );
-      const defaultRepo = await db
+    let projectIndex = 1;
+    for (const client of externalClients) {
+      // Each client gets 2-3 projects
+      const numProjects = getRandomInt(2, 3);
+
+      for (let i = 0; i < numProjects; i++) {
+        const projectType = getRandomElement(projectTypes);
+        const projectName = `${projectType} - ${client.name}`;
+        const status = getProjectStatus();
+
+        const startDate = getRandomDate(
+          new Date(2022, 0, 1),
+          new Date(2024, 11, 31)
+        );
+        const endDate =
+          status === "completed" || status === "active"
+            ? getRandomDate(startDate, new Date(2025, 11, 31))
+            : null;
+
+        // Find consultant managing this client
+        const consultant = velionEmployees.find((u) => u.id === client.userId)!;
+
+        const [project] = await db
+          .insert(projects)
+          .values({
+            projectCode: generateProjectCode(projectIndex),
+            name: projectName,
+            clientId: client.id,
+            domain: projectType,
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate ? endDate.toISOString().split("T")[0] : null,
+            status,
+            leadConsultantId: consultant.id,
+            clientSatisfactionScore:
+              status === "completed" ? getRandomInt(4, 5) : null,
+          })
+          .returning();
+
+        allProjects.push(project);
+        projectIndex++;
+      }
+    }
+
+    console.log(`  ✓ Created ${allProjects.length} projects`);
+
+    // ========================================================================
+    // STEP 5: Create Repositories
+    // ========================================================================
+    console.log("\n📚 Step 5: Creating repositories...");
+
+    // Global repository (owned by an administrator)
+    const admin = velionEmployees.find((u) => u.role === "administrator")!;
+    const [globalRepo] = await db
+      .insert(repositories)
+      .values({
+        name: "Global Knowledge Repository",
+        description:
+          "Central repository for all Velion Dynamics knowledge assets, accessible across all regional offices",
+        ownerId: admin.id,
+        tags: ["Global", "Knowledge", "Documentation"],
+        itemCount: 0,
+        contributorCount: 0,
+        isPublic: false,
+        encryptionEnabled: true,
+        searchIndexStatus: "active",
+      })
+      .returning();
+    allRepositories.push(globalRepo);
+
+    // Regional repositories
+    const regionalRepos = [
+      { name: "Project Documentation - Europe", region: europeRegion },
+      { name: "Project Documentation - Asia", region: asiaRegion },
+      { name: "Project Documentation - North America", region: naRegion },
+    ];
+
+    for (const repoInfo of regionalRepos) {
+      const regionChampion = velionEmployees.find(
+        (u) =>
+          u.role === "knowledge_champion" && u.regionId === repoInfo.region.id
+      )!;
+
+      const [repo] = await db
         .insert(repositories)
         .values({
-          name: "Default Individual Repository",
-          description: "Default repository for individual user knowledge items",
-          ownerId: individualUsers[0].id,
-          tags: ["Default", "Individual"],
+          name: repoInfo.name,
+          description: `Regional project documentation and knowledge assets for ${repoInfo.region.name} office`,
+          ownerId: regionChampion.id,
+          tags: [repoInfo.region.name, "Projects", "Documentation"],
           itemCount: 0,
           contributorCount: 0,
-          isPublic: true,
+          isPublic: false,
           encryptionEnabled: true,
           searchIndexStatus: "active",
         })
         .returning();
-      availableRepositories = defaultRepo;
+      allRepositories.push(repo);
     }
 
-    for (const individualUser of individualUsers) {
-      // Create exactly 10 knowledge items per individual user
-      for (let i = 0; i < 10; i++) {
-        const type = getRandomElement(knowledgeTypes);
-        const title = `${getRandomElement(knowledgeItemTitles)} - Personal`;
-        const description = getRandomElement(knowledgeItemDescriptions);
-        const repository =
-          availableRepositories.length > 0
-            ? getRandomElement(availableRepositories)
-            : null;
+    // Additional repositories
+    const additionalRepoNames = [
+      "Best Practices Library",
+      "Client Resources",
+      "Technical Documentation",
+      "Training Materials",
+      "Policy & Guidelines",
+      "Cross-Office Collaboration",
+    ];
 
-        // Optionally link to a project if available
-        const availableProjects = allProjects.length > 0 ? allProjects : [];
+    for (const repoName of additionalRepoNames) {
+      const owner = getRandomElement(
+        velionEmployees.filter(
+          (u) => u.role === "administrator" || u.role === "knowledge_champion"
+        )
+      );
+
+      const [repo] = await db
+        .insert(repositories)
+        .values({
+          name: repoName,
+          description: `Repository for ${repoName.toLowerCase()} at Velion Dynamics`,
+          ownerId: owner.id,
+          tags: [repoName.split(" ")[0], "Knowledge"],
+          itemCount: 0,
+          contributorCount: 0,
+          isPublic: false,
+          encryptionEnabled: true,
+          searchIndexStatus: "active",
+        })
+        .returning();
+      allRepositories.push(repo);
+    }
+
+    console.log(`  ✓ Created ${allRepositories.length} repositories`);
+
+    // ========================================================================
+    // STEP 6: Create Knowledge Items
+    // ========================================================================
+    console.log("\n📝 Step 6: Creating knowledge items...");
+
+    let knowledgeItemCount = 0;
+
+    // Create knowledge items for each repository
+    for (const repository of allRepositories) {
+      const owner = velionEmployees.find((u) => u.id === repository.ownerId)!;
+      const ownerRegion = createdRegions.find((r) => r.id === owner.regionId);
+      const regionName = ownerRegion?.name;
+
+      // Get projects related to this repository's region or owner
+      const relatedProjects = allProjects.filter((p) => {
+        const projectClient = externalClients.find((c) => c.id === p.clientId);
+        if (!projectClient) return false;
+        return (
+          projectClient.regionId === owner.regionId ||
+          p.leadConsultantId === owner.id
+        );
+      });
+
+      // Create 8-15 knowledge items per repository
+      const numItems = getRandomInt(8, 15);
+
+      for (let i = 0; i < numItems; i++) {
+        const type = getRandomElement([...knowledgeTypes]);
+        const title = getRandomElement(knowledgeItemTitles);
+        const description = `Comprehensive guide for ${title.toLowerCase()}, developed by Velion Dynamics consultants`;
+
         const originatingProject =
-          availableProjects.length > 0 && Math.random() > 0.5
-            ? getRandomElement(availableProjects)
+          relatedProjects.length > 0 && Math.random() > 0.4
+            ? getRandomElement(relatedProjects)
             : null;
 
-        if (!repository) {
-          console.warn(
-            `  ⚠️  No repositories available for individual user ${individualUser.email}, skipping knowledge item`
-          );
-          continue;
-        }
+        // Determine status distribution
+        let status: (typeof knowledgeStatuses)[number];
+        const statusRand = Math.random();
+        if (statusRand < 0.6) status = "approved";
+        else if (statusRand < 0.85) status = "pending_review";
+        else status = "draft";
+
+        // Get validator for approved items
+        const validator =
+          status === "approved"
+            ? velionEmployees.find((u) => u.role === "knowledge_champion")
+            : null;
 
         await db.insert(knowledgeItems).values({
           title,
           description,
-          content: generateKnowledgeItemContent(title, type),
-          type,
+          content: generateKnowledgeContent(
+            title,
+            type as (typeof knowledgeTypes)[number],
+            regionName
+          ),
+          type: type as (typeof knowledgeTypes)[number],
           repositoryId: repository.id,
-          authorId: individualUser.id,
+          authorId: owner.id,
           originatingProjectId: originatingProject?.id || null,
-          status: getRandomElement(knowledgeStatuses),
-          accessLevel: getRandomElement(accessLevels),
-          tags: [type, getRandomElement(["Personal", "Reference", "Notes"])],
-          views: getRandomInt(0, 200),
-          likes: getRandomInt(0, 20),
-          isPublished: Math.random() > 0.4, // 60% published
-          lifecycleStatus: getRandomElement(["draft", "approved"]),
+          status,
+          tags: [
+            type,
+            regionName || "Global",
+            getRandomElement(["Important", "Reference", "Best Practice"]),
+          ],
+          views: getRandomInt(50, 800),
+          likes: getRandomInt(5, 80),
+          isPublished: status === "approved" && Math.random() > 0.2,
+          validatedBy: validator?.id || null,
+          validatedAt: validator ? new Date() : null,
+          lifecycleStatus: status === "approved" ? "approved" : "draft",
         });
 
-        individualKnowledgeItemCount++;
+        knowledgeItemCount++;
       }
     }
-    console.log(
-      `  ✓ Created ${individualKnowledgeItemCount} knowledge items for individual users`
-    );
 
-    console.log("✅ Organizational seeding completed successfully!");
-    console.log(`📊 Summary:`);
-    console.log(`   - Organizational Users: ${organizationalUsers.length}`);
-    console.log(`   - Clients: ${allClients.length}`);
+    console.log(`  ✓ Created ${knowledgeItemCount} knowledge items`);
+
+    // ========================================================================
+    // SUMMARY
+    // ========================================================================
+    console.log("\n✅ Velion Dynamics seeding completed successfully!");
+    console.log("\n📊 Summary:");
+    console.log(`   - Regions: ${createdRegions.length}`);
+    console.log(`   - Velion Employees: ${velionEmployees.length}`);
+    console.log(`   - External Clients: ${externalClients.length}`);
     console.log(`   - Projects: ${allProjects.length}`);
     console.log(`   - Repositories: ${allRepositories.length}`);
-    console.log(`   - Knowledge Items (repositories): ${knowledgeItemCount}`);
-    console.log(`   - Individual Users: ${individualUsers.length}`);
-    console.log(
-      `   - Knowledge Items (individual): ${individualKnowledgeItemCount}`
-    );
+    console.log(`   - Knowledge Items: ${knowledgeItemCount}`);
+    console.log("\n🎉 Database seeded with realistic Velion Dynamics data!");
   } catch (error) {
-    console.error("❌ Error seeding organizational data:", error);
+    console.error("❌ Error seeding database:", error);
     throw error;
   }
 }
 
 seedOrganizational()
   .then(() => {
-    console.log("🎉 Organizational seed script finished");
+    console.log("\n🎉 Seed script finished");
     process.exit(0);
   })
   .catch((error) => {
-    console.error("💥 Organizational seed script failed:", error);
+    console.error("💥 Seed script failed:", error);
     process.exit(1);
   });

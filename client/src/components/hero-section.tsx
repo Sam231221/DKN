@@ -19,20 +19,21 @@ export function HeroSection() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-balance mb-6">
-            The complete platform to{" "}
-            <span className="text-primary">build organizational knowledge</span>
+            Transforming Knowledge Flow at{" "}
+            <span className="text-primary">Velion Dynamics</span>
           </h1>
 
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-10">
-            Transform how your team collaborates and shares knowledge. Securely
-            store, manage, and scale organizational knowledge with AI-powered
-            insights and validation.
+            Velion's Digital Knowledge Network (DKN) unifies project documentation, 
+            client data, and technical resources across global offices. Built on three 
+            pillars: <strong>Centralization</strong>, <strong>Personalization</strong>, 
+            and <strong>Collaboration</strong>.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild className="text-base">
-              <Link to="/signup">
-                Get Started Free
+              <Link to="/login">
+                Access DKN
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
@@ -42,7 +43,7 @@ export function HeroSection() {
               asChild
               className="text-base bg-transparent"
             >
-              <a href="#demo">Watch Demo</a>
+              <a href="#features">Learn More</a>
             </Button>
           </div>
         </div>

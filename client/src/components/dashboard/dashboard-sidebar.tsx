@@ -15,22 +15,33 @@ interface DashboardSidebarProps {
   user: any;
 }
 
-const navigation = [
-  { name: "Explore", href: "/explore", icon: LayoutDashboard },
-  { name: "Search", href: "/explore/search", icon: Search },
-  { name: "Trending", href: "/explore/trending", icon: TrendingUp },
-  { name: "Contributors", href: "/explore/contributors", icon: Users },
-  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award },
-  { name: "Settings", href: "/explore/settings", icon: Settings },
+const allNavigation = [
+  { name: "Explore", href: "/explore", icon: LayoutDashboard, roles: ["all"] },
+  { name: "Search", href: "/explore/search", icon: Search, roles: ["all"] },
+  { name: "Trending", href: "/explore/trending", icon: TrendingUp, roles: ["all"] },
+  { name: "Contributors", href: "/explore/contributors", icon: Users, roles: ["all"] },
+  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award, roles: ["all"] },
+  { name: "Settings", href: "/explore/settings", icon: Settings, roles: ["all"] },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const userRole = user?.role || "client";
+
+  // Filter navigation based on role
+  // Clients have read-only access (all items visible but with limited functionality)
+  const navigation = allNavigation.filter((item) => {
+    if (item.roles.includes("all")) return true;
+    return item.roles.includes(userRole);
+  });
 
   const handleLogout = () => {
+    // Clear both token and user
+    localStorage.removeItem("dkn_token");
     localStorage.removeItem("dkn_user");
-    navigate("/");
+    localStorage.removeItem("dkn_selected_office");
+    navigate("/login");
   };
 
   return (

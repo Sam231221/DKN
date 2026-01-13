@@ -22,19 +22,21 @@ export const authRoutes = Router();
 // Login route with rate limiting and validation
 authRoutes.post("/login", loginRateLimiter, validateLogin, login);
 
-// New multi-step signup route with validation
-// Frontend sends all data from all steps, and we validate all steps at once
-authRoutes.post(
-  "/signup",
-  signupRateLimiter,
-  validateSignupStep1,
-  validateSignupStep2,
-  validateSignupStep3,
-  signup
-);
+// SIGNUP IS DISABLED - System is invitation-only
+// All users must be invited by administrators/consultants via the invitation system
+// See /api/invitations endpoints for invitation management
+// authRoutes.post(
+//   "/signup",
+//   signupRateLimiter,
+//   validateSignupStep1,
+//   validateSignupStep2,
+//   validateSignupStep3,
+//   signup
+// );
 
 // Legacy register route (keeping for backward compatibility)
-authRoutes.post("/register", authRateLimiter, register);
+// DISABLED - System is invitation-only
+// authRoutes.post("/register", authRateLimiter, register);
 
 // Email verification routes
 authRoutes.post("/verify-email", emailRateLimiter, validateEmailVerification, verifyEmail);

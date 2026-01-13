@@ -28,7 +28,6 @@ export const signupRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-
 // Rate limiter for email verification and password reset requests
 export const emailRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

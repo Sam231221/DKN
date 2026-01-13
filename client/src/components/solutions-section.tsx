@@ -5,22 +5,22 @@ import { Building2, Briefcase, GraduationCap } from "lucide-react"
 const solutions = [
   {
     icon: Building2,
-    title: "Enterprise Organizations",
+    title: "Centralization",
     description:
-      "Scale knowledge management across departments and regions with centralized governance and compliance.",
-    benefits: ["Global collaboration", "Department-level control", "Compliance ready"],
+      "Unify all project documentation, client data, and technical resources into secure, searchable repositories accessible from any office.",
+    benefits: ["Global access", "Single source of truth", "GDPR compliant"],
   },
   {
     icon: Briefcase,
-    title: "Consulting Firms",
-    description: "Enable consultants to access and contribute client knowledge securely with granular permissions.",
-    benefits: ["Client portals", "Project knowledge bases", "Secure sharing"],
+    title: "Personalization",
+    description: "AI-powered recommendations for content, experts, and communities based on ongoing projects and areas of expertise.",
+    benefits: ["Smart recommendations", "Expertise mapping", "NLP-powered search"],
   },
   {
     icon: GraduationCap,
-    title: "Knowledge Champions",
-    description: "Empower internal experts to curate, validate, and share their expertise organization-wide.",
-    benefits: ["Expert recognition", "Content curation", "Quality assurance"],
+    title: "Collaboration",
+    description: "Enable geographically dispersed teams to co-develop solutions and share updates through integrated digital workspaces.",
+    benefits: ["Cross-office teams", "Real-time sharing", "Knowledge Champions"],
   },
 ]
 
@@ -30,10 +30,11 @@ export function SolutionsSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Solutions for every role in your organization
+            Core Capabilities of DKN
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From clients to administrators, DKN adapts to your organizational structure.
+            Supporting Velion's consulting operations in logistics, renewable energy, 
+            and smart manufacturing across Europe, Asia, and North America.
           </p>
         </div>
 

@@ -14,6 +14,7 @@ import { notificationRoutes } from "./routes/notification.routes";
 import { invitationRoutes } from "./routes/invitation.routes";
 import { clientRoutes } from "./routes/client.routes";
 import { projectRoutes } from "./routes/project.routes";
+import { regionRoutes } from "./routes/region.routes";
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/regions", regionRoutes);
 
 // Error handling
 app.use(notFoundHandler);

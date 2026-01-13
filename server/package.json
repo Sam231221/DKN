@@ -22,6 +22,9 @@
     "db:drop": "drizzle-kit drop",
     "db:introspect": "drizzle-kit introspect",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed-organizational": "tsx src/db/seed-organizational.ts",
+    "db:clean": "tsx src/db/clean-database.ts",
+    "db:reset": "tsx src/db/clean-database.ts && tsx src/db/seed-organizational.ts",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"
   },

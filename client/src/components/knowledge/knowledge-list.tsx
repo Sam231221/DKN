@@ -18,6 +18,7 @@ import {
   getTypeDisplayName,
   type KnowledgeItem,
 } from "@/lib/api";
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 
 interface KnowledgeListProps {
   type?: string;
@@ -45,17 +46,28 @@ export function KnowledgeList({
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
 
   useEffect(() => {
     const loadItems = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params: { type?: string; status?: string; search?: string; repositoryId?: string } = {};
+        const params: { 
+          type?: string; 
+          status?: string; 
+          search?: string; 
+          repositoryId?: string;
+          regionId?: string | "all";
+        } = {};
         if (type) params.type = type;
         if (status) params.status = status;
         if (search && search.trim()) params.search = search.trim();
         if (repositoryId) params.repositoryId = repositoryId;
+        // Add region filtering
+        if (selectedOffice) {
+          params.regionId = isGlobalView ? "all" : selectedOffice.id;
+        }
         const data = await fetchKnowledgeItems(params);
         setItems(data);
       } catch (err) {
@@ -69,7 +81,7 @@ export function KnowledgeList({
     };
 
     loadItems();
-  }, [type, status, search, repositoryId]);
+  }, [type, status, search, repositoryId, selectedOffice, isGlobalView]);
 
   if (loading) {
     return (

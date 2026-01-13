@@ -16,11 +16,14 @@ export const getProjects = async (
       throw new AppError("Unauthorized", 401);
     }
 
-    // Get user's organization name
+    const { regionId } = req.query;
+
+    // Get user's organization name and region
     const [userData] = await db
       .select({
         organizationName: users.organizationName,
         role: users.role,
+        regionId: users.regionId,
       })
       .from(users)
       .where(eq(users.id, user.id));
@@ -83,7 +86,13 @@ export const getProjects = async (
 
     // Filter by organization if needed
     let filteredProjects = allProjectsRaw;
-    if (userData.role !== "administrator" && userData.organizationName) {
+    const userRole = userData.role;
+    const canSeeAllRegions = 
+      userRole === "administrator" || 
+      userRole === "knowledge_champion" || 
+      userRole === "executive_leadership";
+    
+    if (userRole !== "administrator" && userData.organizationName) {
       const orgConsultantIds = new Set(
         consultantsData
           .filter((c) => c.organizationName === userData.organizationName)
@@ -91,6 +100,39 @@ export const getProjects = async (
       );
       filteredProjects = allProjectsRaw.filter(
         (p) => p.leadConsultantId && orgConsultantIds.has(p.leadConsultantId)
+      );
+    }
+
+    // Region-based filtering
+    if (regionId) {
+      if (regionId === "all") {
+        if (!canSeeAllRegions) {
+          return next(new AppError("Access denied: Global view requires elevated permissions", 403));
+        }
+        // Show all projects - no additional filtering
+      } else {
+        // Filter by specific region using regionId directly
+        // Get consultants in the specified region
+        const regionConsultants = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.regionId, regionId as string));
+        
+        const regionConsultantIdSet = new Set(regionConsultants.map(c => c.id));
+        filteredProjects = filteredProjects.filter(
+          (p) => !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
+        );
+      }
+    } else if (userData.regionId && !canSeeAllRegions) {
+      // Default to user's region if no regionId specified
+      const regionConsultants = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.regionId, userData.regionId));
+      
+      const regionConsultantIdSet = new Set(regionConsultants.map(c => c.id));
+      filteredProjects = filteredProjects.filter(
+        (p) => !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
       );
     }
 

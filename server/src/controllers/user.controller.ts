@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
 import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -16,11 +16,14 @@ export const getUsers = async (
       throw new AppError("Unauthorized", 401);
     }
 
-    // Get user's organization name
+    const { regionId } = req.query;
+
+    // Get user's organization name and region
     const [userData] = await db
       .select({
         organizationName: users.organizationName,
         role: users.role,
+        regionId: users.regionId,
       })
       .from(users)
       .where(eq(users.id, user.id));
@@ -41,15 +44,51 @@ export const getUsers = async (
       organizationName: users.organizationName,
       organizationType: users.organizationType,
       hireDate: users.hireDate,
-      region: users.region,
+      regionId: users.regionId,
       industry: users.industry,
       isActive: users.isActive,
       createdAt: users.createdAt,
     }).from(users);
 
+    const conditions = [];
+
     // Filter by organization if user is not administrator
     if (userData.role !== "administrator" && userData.organizationName) {
-      query = query.where(eq(users.organizationName, userData.organizationName)) as any;
+      conditions.push(eq(users.organizationName, userData.organizationName));
+    }
+
+    // Region-based filtering
+    if (regionId) {
+      const userRole = userData.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (regionId === "all") {
+        if (!canSeeAllRegions) {
+          return next(new AppError("Access denied: Global view requires elevated permissions", 403));
+        }
+        // Show all users - no region filter
+      } else {
+        // Filter by specific region
+        conditions.push(eq(users.regionId, regionId as string));
+      }
+    } else if (userData.regionId) {
+      // Default to user's region if no regionId specified
+      const userRole = userData.role;
+      const canSeeAllRegions = 
+        userRole === "administrator" || 
+        userRole === "knowledge_champion" || 
+        userRole === "executive_leadership";
+      
+      if (!canSeeAllRegions) {
+        conditions.push(eq(users.regionId, userData.regionId));
+      }
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
     }
 
     const allUsers = await query;

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { KnowledgeItemCard } from "@/components/explore/knowledge-item-card"
 import { FilterTabs } from "@/components/explore/filter-tabs"
@@ -10,29 +11,13 @@ import type { FilterType } from "@/components/explore/filter-tabs"
 import { fetchKnowledgeItems, type KnowledgeItem } from "@/lib/api"
 
 export default function DashboardPage() {
-  const navigate = useNavigate()
+  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [user, setUser] = useState<any>(null)
   const [activeFilter, setActiveFilter] = useState<FilterType>("popular")
   const [allItems, setAllItems] = useState<KnowledgeItem[]>([])
   const [items, setItems] = useState<KnowledgeItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      const parsedUser = JSON.parse(userData)
-      // Redirect organizational users to their dashboard
-      if (parsedUser.organizationType === "organizational") {
-        navigate("/dashboard")
-        return
-      }
-      setUser(parsedUser)
-    }
-  }, [navigate])
 
   useEffect(() => {
     // Check if create dialog should be opened from URL

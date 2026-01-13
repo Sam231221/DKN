@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,44 +32,15 @@ import { EditKnowledgeDialog } from "@/components/knowledge/edit-knowledge-dialo
 import { DeleteKnowledgeDialog } from "@/components/knowledge/delete-knowledge-dialog";
 import { Loader2, AlertCircle } from "lucide-react";
 
-interface User {
-  id: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  organizationType?: string;
-  organizationName?: string;
-}
-
 export default function KnowledgeItemDetailPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [user, setUser] = useState<User | null>(null);
   const [item, setItem] = useState<KnowledgeItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-    setUser(parsedUser);
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    if (id) {
-      loadItem();
-    }
-  }, [id, navigate]);
 
   const loadItem = async () => {
     if (!id) return;
@@ -88,6 +60,13 @@ export default function KnowledgeItemDetailPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id && user) {
+      loadItem();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user]);
 
   const handleEditSuccess = () => {
     loadItem();

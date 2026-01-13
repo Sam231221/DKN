@@ -48,9 +48,9 @@ export function Navigation() {
             <Button variant="ghost" asChild>
               <Link to="/login">Sign in</Link>
             </Button>
-            <Button asChild>
-              <Link to="/signup">Get Started</Link>
-            </Button>
+            <span className="text-sm text-muted-foreground">
+              Invitation only
+            </span>
           </div>
 
           <button
@@ -94,9 +94,9 @@ export function Navigation() {
               <Button variant="ghost" asChild className="w-full">
                 <Link to="/login">Sign in</Link>
               </Button>
-              <Button asChild className="w-full">
-                <Link to="/signup">Get Started</Link>
-              </Button>
+              <p className="text-xs text-center text-muted-foreground px-3">
+                Access by invitation only
+              </p>
             </div>
           </div>
         </div>

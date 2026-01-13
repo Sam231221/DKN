@@ -42,10 +42,11 @@ export function FeaturesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Everything you need to manage organizational knowledge
+            Three Pillars of Knowledge Management
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Built for enterprises that value collaboration, innovation, and secure knowledge sharing.
+            DKN is structured around centralization, personalization, and collaboration 
+            to support Velion's global consulting operations.
           </p>
         </div>
 

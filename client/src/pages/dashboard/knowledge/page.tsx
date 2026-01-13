@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useCallback } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { KnowledgeList } from "@/components/knowledge/knowledge-list"
 import { KnowledgeFilters } from "@/components/knowledge/knowledge-filters"
@@ -11,8 +11,7 @@ import { DeleteKnowledgeDialog } from "@/components/knowledge/delete-knowledge-d
 import type { KnowledgeItem } from "@/lib/api"
 
 export default function KnowledgePage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -20,15 +19,6 @@ export default function KnowledgePage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [typeFilter, setTypeFilter] = useState<string | undefined>()
   const [searchQuery, setSearchQuery] = useState<string>("")
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      setUser(JSON.parse(userData))
-    }
-  }, [navigate])
 
   const handleRefresh = useCallback(() => {
     setRefreshKey((prev) => prev + 1)

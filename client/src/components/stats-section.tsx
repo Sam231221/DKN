@@ -2,24 +2,24 @@ import { Card } from "@/components/ui/card"
 
 const stats = [
   {
-    value: "98%",
-    label: "faster knowledge retrieval",
-    company: "Enterprise Teams",
+    value: "33%",
+    label: "reduction in project duplication",
+    company: "Velion Dynamics",
   },
   {
-    value: "300%",
-    label: "increase in collaboration",
-    company: "Global Organizations",
+    value: "40%",
+    label: "increase in cross-office collaboration",
+    company: "Global Teams",
   },
   {
-    value: "24/7",
-    label: "AI-powered assistance",
-    company: "Knowledge Champions",
+    value: "50%",
+    label: "faster onboarding time",
+    company: "New Consultants",
   },
   {
-    value: "100+",
-    label: "integrations available",
-    company: "Tech Stacks",
+    value: "1,200+",
+    label: "consultants across regions",
+    company: "Europe, Asia, Americas",
   },
 ]
 

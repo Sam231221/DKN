@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { AISearchBar } from "@/components/search/ai-search-bar"
 import { SearchResults } from "@/components/search/search-results"
@@ -9,26 +9,14 @@ import { Card } from "@/components/ui/card"
 import { Sparkles } from "lucide-react"
 
 export default function SearchPage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [hasSearched, setHasSearched] = useState(false)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      setUser(JSON.parse(userData))
-    }
-  }, [navigate])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setHasSearched(true)
   }
-
-  if (!user) return null
 
   return (
     <DashboardLayout user={user}>

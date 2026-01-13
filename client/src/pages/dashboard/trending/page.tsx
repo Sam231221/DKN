@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { KnowledgeItemCard } from "@/components/explore/knowledge-item-card"
 import { TrendingTopics } from "@/components/dashboard/trending-topics"
@@ -13,28 +13,12 @@ import { cn } from "@/lib/utils"
 type TimePeriod = "today" | "week" | "month" | "all"
 
 export default function TrendingPage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [allItems, setAllItems] = useState<KnowledgeItem[]>([])
   const [trendingItems, setTrendingItems] = useState<KnowledgeItem[]>([])
   const [loading, setLoading] = useState(true)
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("week")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      const parsedUser = JSON.parse(userData)
-      // Redirect organizational users to their dashboard
-      if (parsedUser.organizationType === "organizational") {
-        navigate("/dashboard")
-        return
-      }
-      setUser(parsedUser)
-    }
-  }, [navigate])
 
   const loadItems = useCallback(async () => {
     try {

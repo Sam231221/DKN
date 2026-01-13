@@ -119,7 +119,7 @@ export const users = pgTable("users", {
   contributions: integer("contributions").default(0),
   // ConsultantType attributes from UML
   hireDate: date("hire_date"), // For consultants
-  region: text("region"), // Region reference
+  regionId: text("region_id").references(() => regions.id), // Region foreign key reference
   // ClientType attributes from UML
   industry: text("industry"), // For clients
   isActive: boolean("is_active").default(true),

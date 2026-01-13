@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -11,17 +10,7 @@ import type { UserRole } from "@/lib/permissions"
 import { Check, X } from "lucide-react"
 
 export default function SettingsPage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user")
-    if (!userData) {
-      navigate("/login")
-    } else {
-      setUser(JSON.parse(userData))
-    }
-  }, [navigate])
+  const { user } = useAuth()
 
   if (!user) return null
 
@@ -49,7 +38,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Role</Label>
               <div>
-                <Badge className={getRoleBadgeColor(user.role)}>{getRoleDisplayName(user.role)}</Badge>
+                <Badge className={getRoleBadgeColor(user.role as UserRole)}>{getRoleDisplayName(user.role as UserRole)}</Badge>
               </div>
             </div>
             <Button>Save Changes</Button>

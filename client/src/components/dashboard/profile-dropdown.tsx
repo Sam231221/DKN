@@ -5,7 +5,6 @@ import {
   User,
   Settings,
   LogOut,
-  CreditCard,
   Bell,
   HelpCircle,
   Moon,
@@ -52,8 +51,11 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
   }, [isOpen]);
 
   const handleLogout = () => {
+    // Clear both token and user via AuthContext
+    localStorage.removeItem("dkn_token");
     localStorage.removeItem("dkn_user");
-    navigate("/");
+    localStorage.removeItem("dkn_selected_office");
+    navigate("/login");
   };
 
   const toggleTheme = () => {
@@ -152,13 +154,6 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
             >
               <Bell className="h-4 w-4 text-muted-foreground" />
               <span>Notifications</span>
-            </button>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
-            >
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <span>Subscription</span>
             </button>
             <button
               onClick={toggleTheme}

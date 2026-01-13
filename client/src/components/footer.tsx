@@ -4,25 +4,25 @@ const footerLinks = {
   product: [
     { label: "Features", to: "#features" },
     { label: "Solutions", to: "#solutions" },
-    { label: "Pricing", to: "#" },
-    { label: "Security", to: "#" },
+    { label: "Knowledge Repositories", to: "#" },
+    { label: "Security & Compliance", to: "#" },
   ],
   company: [
-    { label: "About", to: "#about" },
-    { label: "Blog", to: "#" },
-    { label: "Careers", to: "#" },
-    { label: "Contact", to: "#" },
+    { label: "About Velion", to: "#about" },
+    { label: "Connect to Grow", to: "#" },
+    { label: "Knowledge Champions", to: "#" },
+    { label: "Governance Council", to: "#" },
   ],
   resources: [
     { label: "Documentation", to: "#" },
-    { label: "Help Center", to: "#" },
-    { label: "Community", to: "#" },
-    { label: "API", to: "#" },
+    { label: "Training Materials", to: "#" },
+    { label: "Best Practices", to: "#" },
+    { label: "Support", to: "#" },
   ],
   legal: [
-    { label: "Privacy", to: "#" },
-    { label: "Terms", to: "#" },
-    { label: "Cookie Policy", to: "#" },
+    { label: "Privacy Policy", to: "#" },
+    { label: "Data Protection", to: "#" },
+    { label: "GDPR Compliance", to: "#" },
   ],
 };
 
@@ -105,7 +105,7 @@ export function Footer() {
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Built with knowledge, powered by AI
+            Transforming knowledge flow since 2021 • Powered by IntraCore Technologies
           </div>
         </div>
       </div>

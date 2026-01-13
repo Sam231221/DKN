@@ -8,6 +8,68 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+/**
+ * Centralized API request function with global 401 error handling
+ * Automatically handles token expiration and redirects to login
+ */
+async function apiRequest<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<ApiResponse<T>> {
+  const token = localStorage.getItem("dkn_token");
+
+  if (!token) {
+    // Clear any stale user data
+    localStorage.removeItem("dkn_user");
+    // Redirect to login if not already there
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  // Handle 401 Unauthorized globally
+  if (response.status === 401) {
+    // Clear auth data
+    localStorage.removeItem("dkn_token");
+    localStorage.removeItem("dkn_user");
+    localStorage.removeItem("dkn_selected_office");
+
+    // Dispatch storage event to notify other tabs/components
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "dkn_token",
+        newValue: null,
+      })
+    );
+
+    // Redirect to login if not already there
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+
+    throw new Error("Session expired. Please login again.");
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({
+      message: response.statusText,
+    }));
+    throw new Error(errorData.message || `API error: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export interface KnowledgeItem {
   id: string;
   title: string;
@@ -58,54 +120,28 @@ export async function fetchKnowledgeItems(params?: {
   status?: string;
   search?: string;
   repositoryId?: string;
+  regionId?: string | "all";
 }): Promise<KnowledgeItem[]> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const queryParams = new URLSearchParams();
   if (params?.type) queryParams.append("type", params.type);
   if (params?.status) queryParams.append("status", params.status);
   if (params?.search) queryParams.append("search", params.search);
   if (params?.repositoryId)
     queryParams.append("repositoryId", params.repositoryId);
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
 
-  const url = `${API_BASE_URL}/knowledge${
+  const endpoint = `/knowledge${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch knowledge items: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<KnowledgeItem[]> = await response.json();
+  const result = await apiRequest<KnowledgeItem[]>(endpoint);
   return result.data || [];
 }
 
 export async function fetchKnowledgeItemById(
   id: string
 ): Promise<KnowledgeItem> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/knowledge/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch knowledge item: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<KnowledgeItem> = await response.json();
+  const result = await apiRequest<KnowledgeItem>(`/knowledge/${id}`);
   if (!result.data) {
     throw new Error("Knowledge item not found");
   }
@@ -154,11 +190,6 @@ export interface KnowledgeItemsStats {
 }
 
 export async function fetchKnowledgeItemsStats(): Promise<KnowledgeItemsStats> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   // Fetch all items and calculate stats
   const items = await fetchKnowledgeItems();
 
@@ -232,6 +263,18 @@ export async function uploadKnowledgeItem(
     });
 
     xhr.addEventListener("load", () => {
+      // Handle 401 Unauthorized
+      if (xhr.status === 401) {
+        localStorage.removeItem("dkn_token");
+        localStorage.removeItem("dkn_user");
+        localStorage.removeItem("dkn_selected_office");
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+        reject(new Error("Session expired. Please login again."));
+        return;
+      }
+
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const result: ApiResponse<KnowledgeItem> & {
@@ -291,28 +334,11 @@ export async function updateKnowledgeItem(
   id: string,
   data: UpdateKnowledgeItemData
 ): Promise<KnowledgeItem> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/knowledge/${id}`, {
+  const result = await apiRequest<KnowledgeItem>(`/knowledge/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: response.statusText,
-    }));
-    throw new Error(error.message || "Failed to update knowledge item");
-  }
-
-  const result: ApiResponse<KnowledgeItem> = await response.json();
   if (!result.data) {
     throw new Error("Update failed: No data returned");
   }
@@ -321,24 +347,9 @@ export async function updateKnowledgeItem(
 
 // Delete knowledge item
 export async function deleteKnowledgeItem(id: string): Promise<void> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/knowledge/${id}`, {
+  await apiRequest<void>(`/knowledge/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: response.statusText,
-    }));
-    throw new Error(error.message || "Failed to delete knowledge item");
-  }
 }
 
 // Fetch repositories
@@ -360,43 +371,22 @@ export interface Repository {
   updatedAt: string;
 }
 
-export async function fetchRepositories(): Promise<Repository[]> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
+export async function fetchRepositories(params?: {
+  regionId?: string | "all";
+}): Promise<Repository[]> {
+  const queryParams = new URLSearchParams();
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
 
-  const response = await fetch(`${API_BASE_URL}/repositories`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const endpoint = `/repositories${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch repositories: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<Repository[]> = await response.json();
+  const result = await apiRequest<Repository[]>(endpoint);
   return result.data || [];
 }
 
 export async function fetchRepositoryById(id: string): Promise<Repository> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/repositories/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch repository: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<Repository> = await response.json();
+  const result = await apiRequest<Repository>(`/repositories/${id}`);
   if (!result.data) {
     throw new Error("Repository not found");
   }
@@ -425,32 +415,19 @@ export async function fetchProjects(params?: {
   status?: string;
   search?: string;
   clientId?: string;
+  regionId?: string | "all";
 }): Promise<Project[]> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const queryParams = new URLSearchParams();
   if (params?.status) queryParams.append("status", params.status);
   if (params?.search) queryParams.append("search", params.search);
   if (params?.clientId) queryParams.append("clientId", params.clientId);
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
 
-  const url = `${API_BASE_URL}/projects${
+  const endpoint = `/projects${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch projects: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<Project[]> = await response.json();
+  const result = await apiRequest<Project[]>(endpoint);
   return result.data || [];
 }
 
@@ -468,30 +445,17 @@ export interface Client {
 
 export async function fetchClients(params?: {
   search?: string;
+  regionId?: string | "all";
 }): Promise<Client[]> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const queryParams = new URLSearchParams();
   if (params?.search) queryParams.append("search", params.search);
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
 
-  const url = `${API_BASE_URL}/clients${
+  const endpoint = `/clients${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch clients: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<Client[]> = await response.json();
+  const result = await apiRequest<Client[]>(endpoint);
   return result.data || [];
 }
 
@@ -507,7 +471,7 @@ export interface Employee {
   organizationName?: string | null;
   organizationType?: string | null;
   hireDate?: string | null;
-  region?: string | null;
+  regionId?: string | null;
   industry?: string | null;
   isActive?: boolean | null;
   createdAt: string;
@@ -517,32 +481,19 @@ export async function fetchEmployees(params?: {
   status?: string;
   role?: string;
   search?: string;
+  regionId?: string | "all";
 }): Promise<Employee[]> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const queryParams = new URLSearchParams();
   if (params?.status) queryParams.append("status", params.status);
   if (params?.role) queryParams.append("role", params.role);
   if (params?.search) queryParams.append("search", params.search);
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
 
-  const url = `${API_BASE_URL}/users${
+  const endpoint = `/users${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch employees: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<Employee[]> = await response.json();
+  const result = await apiRequest<Employee[]>(endpoint);
   return result.data || [];
 }
 
@@ -724,6 +675,78 @@ export async function resetPassword(
   }
 }
 
+// Invitation API functions
+export interface Invitation {
+  id: string;
+  email: string;
+  organizationName: string | null;
+  role: string;
+  expiresAt: string;
+  accepted: boolean;
+}
+
+export interface ActivationData {
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  address?: string;
+  experienceLevel?: string;
+  interests?: string[];
+}
+
+export async function getInvitation(token: string): Promise<Invitation> {
+  const response = await fetch(`${API_BASE_URL}/invitations/${token}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({
+      message: response.statusText,
+    }));
+    throw new Error(error.message || "Failed to fetch invitation");
+  }
+
+  const result: ApiResponse<Invitation> = await response.json();
+  if (result.status === "error" || !result.data) {
+    throw new Error(result.message || "Failed to fetch invitation");
+  }
+  return result.data;
+}
+
+export async function activateInvitation(
+  token: string,
+  data: ActivationData
+): Promise<{ user: User; token: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/invitations/activate/${token}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({
+      message: response.statusText,
+    }));
+    throw new Error(error.message || "Failed to activate invitation");
+  }
+
+  const result: ApiResponse<{ user: User; token: string }> =
+    await response.json();
+  if (result.status === "error" || !result.data) {
+    throw new Error(result.message || "Failed to activate invitation");
+  }
+  return result.data;
+}
+
 // User API functions
 export interface User {
   id: string;
@@ -745,30 +768,42 @@ export async function updateUser(
   id: string,
   data: UpdateUserData
 ): Promise<User> {
-  const token = localStorage.getItem("dkn_token");
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+  const result = await apiRequest<User>(`/users/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: response.statusText,
-    }));
-    throw new Error(error.message || "Failed to update user");
-  }
-
-  const result: ApiResponse<User> = await response.json();
   if (!result.data) {
     throw new Error("Update failed: No data returned");
+  }
+  return result.data;
+}
+
+// Regional Office API functions
+export interface RegionalOffice {
+  id: string;
+  name: string;
+  region?: string;
+  connectivityStatus?: "online" | "offline" | "limited";
+  dataProtectionLaws?: string[];
+}
+
+export async function fetchAvailableRegionalOffices(): Promise<
+  RegionalOffice[]
+> {
+  const result = await apiRequest<RegionalOffice[]>("/regions/offices");
+  if (result.status === "error" || !result.data) {
+    throw new Error(result.message || "Failed to fetch regional offices");
+  }
+  return result.data;
+}
+
+export async function fetchRegionalOfficeById(
+  id: string
+): Promise<RegionalOffice> {
+  const result = await apiRequest<RegionalOffice>(`/regions/offices/${id}`);
+  if (result.status === "error" || !result.data) {
+    throw new Error(result.message || "Failed to fetch regional office");
   }
   return result.data;
 }

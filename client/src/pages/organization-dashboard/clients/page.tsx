@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +33,6 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Mail, Phone, Building, MoreVertical, Loader2 } from "lucide-react";
 import { fetchClients, type Client as ClientType } from "@/lib/api";
 
-interface User {
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  organizationName?: string;
-}
-
 interface Client {
   id: string;
   name: string;
@@ -65,8 +59,8 @@ const mapClientToDisplay = (client: ClientType): Client => {
 const ITEMS_PER_PAGE = 5;
 
 export default function ClientsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,7 +70,9 @@ export default function ClientsPage() {
   const loadClients = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedClients = await fetchClients();
+      // Pass regionId to filter clients by region
+      const regionId = isGlobalView ? "all" : selectedOffice?.id;
+      const fetchedClients = await fetchClients({ regionId });
       const mappedClients = fetchedClients.map(mapClientToDisplay);
       setClients(mappedClients);
     } catch (error) {
@@ -85,7 +81,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedOffice, isGlobalView]);
 
   useEffect(() => {
     if (user) {
@@ -93,24 +89,6 @@ export default function ClientsPage() {
     }
   }, [user, loadClients]);
 
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
 
   // Filter and search clients
   const filteredClients = useMemo(() => {

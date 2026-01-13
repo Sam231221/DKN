@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { KnowledgeList } from "@/components/knowledge/knowledge-list";
 import { KnowledgeFilters } from "@/components/knowledge/knowledge-filters";
+import { RegionFilterToggle } from "@/components/dashboard/region-filter-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FileText, CheckCircle2, Clock, XCircle } from "lucide-react";
@@ -15,19 +16,10 @@ import {
   type KnowledgeItemsStats,
 } from "@/lib/api";
 import { Loader2 } from "lucide-react";
-
-interface User {
-  id?: string;
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  organizationName?: string;
-  role?: string;
-}
+import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 
 export default function KnowledgeItemsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -37,25 +29,7 @@ export default function KnowledgeItemsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [stats, setStats] = useState<KnowledgeItemsStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-
-  useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
-    }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setUser(parsedUser);
-    });
-  }, [navigate]);
+  const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
 
   // Load stats
   useEffect(() => {
@@ -115,7 +89,14 @@ export default function KnowledgeItemsPage() {
     handleRefresh();
   }, [handleRefresh]);
 
-  if (!user) return null;
+  // Show loading state while user is being loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const displayStats = stats || {
     total: 0,
@@ -132,9 +113,13 @@ export default function KnowledgeItemsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Knowledge Items</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">Knowledge Items</h1>
+              <RegionFilterToggle />
+            </div>
             <p className="text-muted-foreground mt-1">
               Browse and manage organizational knowledge items
+              {selectedOffice && !isGlobalView && ` • ${selectedOffice.name}`}
             </p>
           </div>
           <Button onClick={() => setShowCreateDialog(true)}>

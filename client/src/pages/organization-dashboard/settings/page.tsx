@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -12,18 +13,9 @@ import type { UserRole } from "@/lib/permissions";
 import { Check, X, Loader2, Save } from "lucide-react";
 import { updateUser } from "@/lib/api";
 
-interface User {
-  id?: string;
-  organizationType?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  organizationName?: string;
-}
-
 export default function SettingsPage() {
+  const { user, updateUser: updateAuthUser } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -35,22 +27,10 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    const userData = localStorage.getItem("dkn_user");
-    if (!userData) {
-      navigate("/login");
-      return;
+    if (user) {
+      setName(user.name || "");
     }
-
-    const parsedUser = JSON.parse(userData) as User;
-
-    if (parsedUser.organizationType !== "organizational") {
-      navigate("/explore");
-      return;
-    }
-
-    setUser(parsedUser);
-    setName(parsedUser.name || "");
-  }, [navigate]);
+  }, [user]);
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -62,12 +42,8 @@ export default function SettingsPage() {
       const updatedUser = await updateUser(user.id, { name });
       
       // Update local storage
-      const updatedUserData = {
-        ...user,
-        name: updatedUser.name,
-      };
-      localStorage.setItem("dkn_user", JSON.stringify(updatedUserData));
-      setUser(updatedUserData);
+      // Update auth context
+      updateAuthUser(updatedUser);
       
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
