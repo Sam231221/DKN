@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { ContributorsList } from "@/components/contributors/contributors-list"
@@ -6,6 +7,11 @@ import { hasPermission } from "@/lib/permissions"
 
 export default function ContributorsPage() {
   const { user } = useAuth()
+  const [filters, setFilters] = useState<{ role?: string; status?: string; search?: string }>({})
+
+  const handleFiltersChange = useCallback((newFilters: { role?: string; status?: string; search?: string }) => {
+    setFilters(newFilters)
+  }, [])
 
   if (!user) return null
 
@@ -26,8 +32,8 @@ export default function ContributorsPage() {
           )}
         </div>
 
-        <ContributorsFilters />
-        <ContributorsList canManageUsers={canManageUsers} />
+        <ContributorsFilters onFiltersChange={handleFiltersChange} />
+        <ContributorsList canManageUsers={canManageUsers} filters={filters} />
       </div>
     </DashboardLayout>
   )

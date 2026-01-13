@@ -16,6 +16,7 @@
     "db:apply-email-verification": "tsx src/db/apply-email-verification-migration.ts",
     "db:apply-repositories-columns": "tsx src/db/apply-repositories-columns.ts",
     "db:apply-region-column": "tsx src/db/apply-region-column-migration.ts",
+    "db:apply-department": "tsx src/db/apply-department-migration.ts",
     "db:push": "drizzle-kit push",
     "db:up": "drizzle-kit up",
     "db:studio": "drizzle-kit studio",

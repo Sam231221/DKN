@@ -122,6 +122,7 @@ export const users = pgTable("users", {
   regionId: text("region_id").references(() => regions.id), // Region foreign key reference
   // ClientType attributes from UML
   industry: text("industry"), // For clients
+  department: text("department"), // Department/team name (e.g., "Engineering", "Consulting", "Product", "IT")
   isActive: boolean("is_active").default(true),
   // Email verification fields
   emailVerified: boolean("email_verified").default(false),

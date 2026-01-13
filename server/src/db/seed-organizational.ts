@@ -6,6 +6,7 @@ import {
   repositories,
   knowledgeItems,
   regions,
+  contributions,
 } from "./schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -369,6 +370,29 @@ function generateProjectCode(index: number): string {
   return `PRJ-${year}-${String(index).padStart(3, "0")}`;
 }
 
+function getDepartmentForUser(role: string, regionName: string): string {
+  // Derive department from role and region
+  const departments = ["Engineering", "Consulting", "Product", "IT"];
+
+  // Administrators and Knowledge Champions typically in Engineering or IT
+  if (role === "administrator" || role === "knowledge_champion") {
+    return getRandomElement(["Engineering", "IT"]);
+  }
+
+  // Consultants typically in Consulting or Engineering
+  if (role === "consultant") {
+    return getRandomElement(["Consulting", "Engineering", "Product"]);
+  }
+
+  // Employees distributed across all departments
+  if (role === "employee") {
+    return getRandomElement(departments);
+  }
+
+  // Default to Consulting
+  return "Consulting";
+}
+
 function generateKnowledgeContent(
   title: string,
   type: (typeof knowledgeTypes)[number],
@@ -556,12 +580,20 @@ async function seedOrganizational() {
         .returning();
 
       createdRegions.push(region);
-      console.log(`  ✓ Created branch: ${regionInfo.name} (${regionInfo.region})`);
+      console.log(
+        `  ✓ Created branch: ${regionInfo.name} (${regionInfo.region})`
+      );
     }
 
-    const europeRegion = createdRegions.find((r) => r.region === "Europe" || r.name === "London Office")!;
-    const asiaRegion = createdRegions.find((r) => r.region === "Asia" || r.name === "Tokyo Office")!;
-    const naRegion = createdRegions.find((r) => r.region === "North America" || r.name === "New York Office")!;
+    const europeRegion = createdRegions.find(
+      (r) => r.region === "Europe" || r.name === "London Office"
+    )!;
+    const asiaRegion = createdRegions.find(
+      (r) => r.region === "Asia" || r.name === "Tokyo Office"
+    )!;
+    const naRegion = createdRegions.find(
+      (r) => r.region === "North America" || r.name === "New York Office"
+    )!;
 
     // ========================================================================
     // STEP 2: Create Velion Dynamics Users
@@ -605,6 +637,12 @@ async function seedOrganizational() {
           contributions = getRandomInt(20, 50);
         }
 
+        // Get department based on role and region
+        const department = getDepartmentForUser(
+          userInfo.role,
+          region.region || region.name
+        );
+
         const [user] = await db
           .insert(users)
           .values({
@@ -618,6 +656,7 @@ async function seedOrganizational() {
             organizationName: "Velion Dynamics",
             role: userInfo.role,
             regionId: region.id,
+            department,
             points,
             contributions,
             isActive: true,
@@ -644,7 +683,8 @@ async function seedOrganizational() {
     // ========================================================================
     console.log("\n🏢 Step 3: Creating external clients...");
 
-    const consultants = velionEmployees.filter((u) => u.role === "consultant");
+    // First, create client users (one per client company)
+    const clientUsers: (typeof users.$inferSelect)[] = [];
 
     for (let i = 0; i < clientNames.length; i++) {
       const clientName = clientNames[i];
@@ -652,22 +692,68 @@ async function seedOrganizational() {
 
       // Assign client to a region (distribute evenly)
       const clientRegion = [europeRegion, asiaRegion, naRegion][i % 3];
-      // Assign to a consultant
-      const consultant = consultants[i % consultants.length];
 
+      // Generate client user email and name
+      const clientEmail = `contact@${clientName
+        .toLowerCase()
+        .replace(/\s+/g, "")}.com`;
+      const clientUsername = clientName.toLowerCase().replace(/\s+/g, "-");
+
+      // Check if client user already exists
+      const existingClientUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, clientEmail))
+        .limit(1);
+
+      let clientUser;
+      if (existingClientUser.length > 0) {
+        clientUser = existingClientUser[0];
+        clientUsers.push(clientUser);
+        console.log(`  ✓ Client user "${clientEmail}" already exists`);
+      } else {
+        // Create a user with role "client" for this client company
+        const [newClientUser] = await db
+          .insert(users)
+          .values({
+            email: clientEmail,
+            password: hashedPassword,
+            username: clientUsername,
+            name: clientName,
+            firstName: clientName.split(" ")[0] || clientName,
+            lastName: clientName.split(" ").slice(1).join(" ") || "Client",
+            organizationType: "organizational",
+            organizationName: clientName,
+            role: "client",
+            regionId: clientRegion.id,
+            industry,
+            isActive: true,
+            emailVerified: true,
+            points: getRandomInt(0, 100),
+            contributions: 0,
+          })
+          .returning();
+
+        clientUser = newClientUser;
+        clientUsers.push(clientUser);
+        console.log(`  ✓ Created client user: ${clientEmail}`);
+      }
+
+      // Now create the client record linked to the client user
       const [client] = await db
         .insert(clients)
         .values({
           name: clientName,
           industry,
           regionId: clientRegion.id,
-          userId: consultant.id,
+          userId: clientUser.id, // Link to the client user, not a consultant
         })
         .returning();
 
       externalClients.push(client);
     }
 
+    console.log(`  ✓ Created ${clientUsers.length} client users`);
     console.log(`  ✓ Created ${externalClients.length} external clients`);
 
     // ========================================================================
@@ -675,10 +761,23 @@ async function seedOrganizational() {
     // ========================================================================
     console.log("\n📁 Step 4: Creating projects...");
 
+    // Get consultants for assigning to projects
+    const consultants = velionEmployees.filter((u) => u.role === "consultant");
+
     let projectIndex = 1;
     for (const client of externalClients) {
       // Each client gets 2-3 projects
       const numProjects = getRandomInt(2, 3);
+
+      // Find consultants from the same region as the client to manage projects
+      const clientRegionConsultants = consultants.filter(
+        (c) => c.regionId === client.regionId
+      );
+      // Fallback to all consultants if no regional match
+      const availableConsultants =
+        clientRegionConsultants.length > 0
+          ? clientRegionConsultants
+          : consultants;
 
       for (let i = 0; i < numProjects; i++) {
         const projectType = getRandomElement(projectTypes);
@@ -694,8 +793,8 @@ async function seedOrganizational() {
             ? getRandomDate(startDate, new Date(2025, 11, 31))
             : null;
 
-        // Find consultant managing this client
-        const consultant = velionEmployees.find((u) => u.id === client.userId)!;
+        // Assign a consultant from the same region (or any consultant if no regional match)
+        const consultant = getRandomElement(availableConsultants);
 
         const [project] = await db
           .insert(projects)
@@ -761,9 +860,15 @@ async function seedOrganizational() {
         .insert(repositories)
         .values({
           name: repoInfo.name,
-          description: `Regional project documentation and knowledge assets for ${repoInfo.region.region || repoInfo.region.name} office`,
+          description: `Regional project documentation and knowledge assets for ${
+            repoInfo.region.region || repoInfo.region.name
+          } office`,
           ownerId: regionChampion.id,
-          tags: [repoInfo.region.region || repoInfo.region.name, "Projects", "Documentation"],
+          tags: [
+            repoInfo.region.region || repoInfo.region.name,
+            "Projects",
+            "Documentation",
+          ],
           itemCount: 0,
           contributorCount: 0,
           isPublic: false,
@@ -890,6 +995,55 @@ async function seedOrganizational() {
     }
 
     console.log(`  ✓ Created ${knowledgeItemCount} knowledge items`);
+
+    // ========================================================================
+    // STEP 7: Create Comment Contributions
+    // ========================================================================
+    console.log("\n💬 Step 7: Creating comment contributions...");
+
+    // Get all knowledge items for commenting
+    const allKnowledgeItems = await db
+      .select({ id: knowledgeItems.id })
+      .from(knowledgeItems);
+
+    let commentCount = 0;
+
+    // Only create comments if we have knowledge items
+    if (allKnowledgeItems.length > 0) {
+      // Create comments for each user
+      for (const employee of velionEmployees) {
+        // Calculate number of comments based on role
+        let numComments = 0;
+        if (employee.role === "administrator") {
+          numComments = getRandomInt(60, 100);
+        } else if (employee.role === "knowledge_champion") {
+          numComments = getRandomInt(50, 90);
+        } else if (employee.role === "consultant") {
+          numComments = getRandomInt(30, 70);
+        } else if (employee.role === "employee") {
+          numComments = getRandomInt(10, 40);
+        }
+
+        // Create comment contributions
+        for (let i = 0; i < numComments; i++) {
+          const randomKnowledgeItem = getRandomElement(allKnowledgeItems);
+
+          await db.insert(contributions).values({
+            userId: employee.id,
+            knowledgeItemId: randomKnowledgeItem.id,
+            type: "commented",
+            points: getRandomInt(5, 15), // Comments give 5-15 points
+            createdAt: getRandomDate(new Date(2023, 0, 1), new Date()),
+          });
+
+          commentCount++;
+        }
+      }
+    } else {
+      console.log("  ⚠️  No knowledge items found, skipping comment creation");
+    }
+
+    console.log(`  ✓ Created ${commentCount} comment contributions`);
 
     // ========================================================================
     // SUMMARY

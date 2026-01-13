@@ -64,6 +64,30 @@ async function apiRequest<T>(
     const errorData = await response.json().catch(() => ({
       message: response.statusText,
     }));
+
+    // Handle 404 "User not found" - clear auth and redirect to login
+    if (
+      response.status === 404 &&
+      errorData.message?.includes("User not found")
+    ) {
+      localStorage.removeItem("dkn_token");
+      localStorage.removeItem("dkn_user");
+      localStorage.removeItem("dkn_selected_office");
+
+      // Dispatch storage event to notify other tabs/components
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "dkn_token",
+          newValue: null,
+        })
+      );
+
+      // Redirect to login if not already there
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
     throw new Error(errorData.message || `API error: ${response.statusText}`);
   }
 
@@ -494,6 +518,42 @@ export async function fetchEmployees(params?: {
   }`;
 
   const result = await apiRequest<Employee[]>(endpoint);
+  return result.data || [];
+}
+
+// Contributors API (uses /api/users endpoint with enhanced fields)
+export interface Contributor {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  contributions: number;
+  points: number;
+  comments: number;
+  department: string | null;
+  status: "active" | "inactive";
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar?: string | null;
+}
+
+export async function fetchContributors(params?: {
+  role?: string;
+  status?: string;
+  search?: string;
+  regionId?: string | "all";
+}): Promise<Contributor[]> {
+  const queryParams = new URLSearchParams();
+  if (params?.role) queryParams.append("role", params.role);
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.search) queryParams.append("search", params.search);
+  if (params?.regionId) queryParams.append("regionId", params.regionId);
+
+  const endpoint = `/users${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const result = await apiRequest<Contributor[]>(endpoint);
   return result.data || [];
 }
 

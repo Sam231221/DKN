@@ -35,6 +35,7 @@ import OrganizationTrendingPage from "@/pages/organization-dashboard/trending/pa
 import OrganizationLeaderboardPage from "@/pages/organization-dashboard/leaderboard/page";
 import OrganizationContributorsPage from "@/pages/organization-dashboard/contributors/page";
 import { Loader2 } from "lucide-react";
+import { TestUsersModal } from "@/components/test-users-modal";
 
 function Home() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -67,6 +68,7 @@ function Home() {
       <SolutionsSection />
       <CTASection />
       <Footer />
+      <TestUsersModal />
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
-import { users } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { users, contributions } from "../db/schema";
+import { eq, and, or, ilike, sql, count, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -16,7 +16,7 @@ export const getUsers = async (
       throw new AppError("Unauthorized", 401);
     }
 
-    const { regionId } = req.query;
+    const { regionId, role, status, search } = req.query;
 
     // Get user's organization name and region
     const [userData] = await db
@@ -29,26 +29,31 @@ export const getUsers = async (
       .where(eq(users.id, user.id));
 
     if (!userData) {
-      throw new AppError("User not found", 404);
+      throw new AppError("User not found in database. Please log in again or ensure the database is seeded.", 404);
     }
 
-    // Build query
-    let query = db.select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      role: users.role,
-      avatar: users.avatar,
-      points: users.points,
-      contributions: users.contributions,
-      organizationName: users.organizationName,
-      organizationType: users.organizationType,
-      hireDate: users.hireDate,
-      regionId: users.regionId,
-      industry: users.industry,
-      isActive: users.isActive,
-      createdAt: users.createdAt,
-    }).from(users);
+    // Build main query
+    let query = db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        avatar: users.avatar,
+        points: users.points,
+        contributions: users.contributions,
+        department: users.department,
+        organizationName: users.organizationName,
+        organizationType: users.organizationType,
+        hireDate: users.hireDate,
+        regionId: users.regionId,
+        industry: users.industry,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      })
+      .from(users);
 
     const conditions = [];
 
@@ -87,15 +92,82 @@ export const getUsers = async (
       }
     }
 
+    // Role filter
+    if (role && role !== "all") {
+      conditions.push(eq(users.role, role as string));
+    }
+
+    // Status filter
+    if (status && status !== "all") {
+      if (status === "active") {
+        conditions.push(eq(users.isActive, true));
+      } else if (status === "inactive") {
+        conditions.push(eq(users.isActive, false));
+      }
+    }
+
+    // Search filter (name or email) - case insensitive
+    if (search && typeof search === "string") {
+      const searchPattern = `%${search}%`;
+      conditions.push(
+        or(
+          ilike(users.name, searchPattern),
+          ilike(users.email, searchPattern),
+          ilike(users.firstName, searchPattern),
+          ilike(users.lastName, searchPattern)
+        )!
+      );
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
 
     const allUsers = await query;
 
+    // Get comments count for all users
+    const userIds = allUsers.map((u) => u.id);
+    const commentsCounts = userIds.length > 0 
+      ? await db
+          .select({
+            userId: contributions.userId,
+            count: sql<number>`count(*)::int`.as("count"),
+          })
+          .from(contributions)
+          .where(
+            and(
+              eq(contributions.type, "commented"),
+              inArray(contributions.userId, userIds)
+            )!
+          )
+          .groupBy(contributions.userId)
+      : [];
+
+    // Create a map of userId -> comments count
+    const commentsMap = new Map<string, number>();
+    commentsCounts.forEach((cc) => {
+      commentsMap.set(cc.userId, cc.count);
+    });
+
+    // Transform the response to match frontend expectations
+    const transformedUsers = allUsers.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      contributions: u.contributions || 0,
+      points: u.points || 0,
+      comments: commentsMap.get(u.id) || 0,
+      department: u.department || null,
+      status: u.isActive ? "active" : "inactive",
+      firstName: u.firstName,
+      lastName: u.lastName,
+      avatar: u.avatar,
+    }));
+
     res.json({
       status: "success",
-      data: allUsers,
+      data: transformedUsers,
     });
   } catch (error) {
     next(error);

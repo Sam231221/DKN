@@ -1,73 +1,75 @@
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Award, FileText, MessageSquare, MoreVertical, Shield } from "lucide-react"
+import { Award, FileText, MessageSquare, MoreVertical, Shield, Loader2 } from "lucide-react"
 import { getRoleBadgeColor, getRoleDisplayName } from "@/lib/permissions"
 import type { UserRole } from "@/lib/permissions"
+import { fetchContributors, type Contributor } from "@/lib/api"
+import { useRegionalOffice } from "@/contexts/RegionalOfficeContext"
 
 interface ContributorsListProps {
   canManageUsers: boolean
+  filters?: {
+    role?: string
+    status?: string
+    search?: string
+  }
 }
 
-const contributors = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    email: "sarah.chen@company.com",
-    role: "knowledge_champion" as UserRole,
-    contributions: 145,
-    points: 3250,
-    comments: 89,
-    department: "Engineering",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Michael Brown",
-    email: "michael.brown@company.com",
-    role: "employee" as UserRole,
-    contributions: 98,
-    points: 2180,
-    comments: 54,
-    department: "Product",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Emily Davis",
-    email: "emily.davis@company.com",
-    role: "consultant" as UserRole,
-    contributions: 72,
-    points: 1890,
-    comments: 41,
-    department: "Consulting",
-    status: "active",
-  },
-  {
-    id: 4,
-    name: "James Wilson",
-    email: "james.wilson@company.com",
-    role: "administrator" as UserRole,
-    contributions: 124,
-    points: 2850,
-    comments: 67,
-    department: "IT",
-    status: "active",
-  },
-  {
-    id: 5,
-    name: "Lisa Anderson",
-    email: "lisa.anderson@client.com",
-    role: "client" as UserRole,
-    contributions: 12,
-    points: 340,
-    comments: 28,
-    department: "External",
-    status: "active",
-  },
-]
+export function ContributorsList({ canManageUsers, filters }: ContributorsListProps) {
+  const [contributors, setContributors] = useState<Contributor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { selectedOffice } = useRegionalOffice()
 
-export function ContributorsList({ canManageUsers }: ContributorsListProps) {
+  useEffect(() => {
+    async function loadContributors() {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await fetchContributors({
+          role: filters?.role,
+          status: filters?.status,
+          search: filters?.search,
+          regionId: selectedOffice?.id || "all",
+        })
+        setContributors(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load contributors")
+        console.error("Error loading contributors:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadContributors()
+  }, [filters?.role, filters?.status, filters?.search, selectedOffice?.id])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    )
+  }
+
+  if (contributors.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground">No contributors found</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {contributors.map((contributor) => (
@@ -97,9 +99,11 @@ export function ContributorsList({ canManageUsers }: ContributorsListProps) {
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
-                <Badge className={getRoleBadgeColor(contributor.role)}>{getRoleDisplayName(contributor.role)}</Badge>
-                <Badge variant="secondary">{contributor.department}</Badge>
-                <Badge variant="outline" className="text-green-500 border-green-500">
+                <Badge className={getRoleBadgeColor(contributor.role as UserRole)}>{getRoleDisplayName(contributor.role as UserRole)}</Badge>
+                {contributor.department && (
+                  <Badge variant="secondary">{contributor.department}</Badge>
+                )}
+                <Badge variant="outline" className={contributor.status === "active" ? "text-green-500 border-green-500" : "text-muted-foreground border-muted-foreground"}>
                   {contributor.status}
                 </Badge>
               </div>

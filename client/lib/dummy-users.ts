@@ -11,7 +11,7 @@ export interface DummyUser {
 export const DUMMY_USERS: DummyUser[] = [
   {
     email: "admin@velion.com",
-    password: "admin123",
+    password: "password123",
     name: "Sarah Johnson",
     role: "administrator",
     points: 2500,
@@ -19,7 +19,7 @@ export const DUMMY_USERS: DummyUser[] = [
   },
   {
     email: "champion@velion.com",
-    password: "champion123",
+    password: "password123",
     name: "Michael Chen",
     role: "knowledge_champion",
     points: 1850,
@@ -27,7 +27,7 @@ export const DUMMY_USERS: DummyUser[] = [
   },
   {
     email: "employee@velion.com",
-    password: "employee123",
+    password: "password123",
     name: "Emma Wilson",
     role: "employee",
     points: 1200,
@@ -35,7 +35,7 @@ export const DUMMY_USERS: DummyUser[] = [
   },
   {
     email: "consultant@velion.com",
-    password: "consultant123",
+    password: "password123",
     name: "David Martinez",
     role: "consultant",
     points: 950,
@@ -43,7 +43,7 @@ export const DUMMY_USERS: DummyUser[] = [
   },
   {
     email: "client@velion.com",
-    password: "client123",
+    password: "password123",
     name: "Lisa Anderson",
     role: "client",
     points: 450,

@@ -39,7 +39,7 @@ interface Employee {
   email: string;
   role: string;
   department?: string;
-  status: "active" | "inactive" | "on_leave";
+  status: "active" | "inactive";
   joinedDate: string;
 }
 
@@ -48,7 +48,7 @@ const ITEMS_PER_PAGE = 5;
 // Map API employee to display employee
 const mapEmployeeToDisplay = (emp: EmployeeType): Employee => {
   // Determine status based on isActive
-  let status: "active" | "inactive" | "on_leave" = emp.isActive ? "active" : "inactive";
+  const status: "active" | "inactive" = emp.isActive ? "active" : "inactive";
   
   return {
     id: emp.id,
@@ -75,7 +75,12 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
       const regionId = isGlobalView ? "all" : selectedOffice?.id;
-      const fetchedEmployees = await fetchEmployees({ regionId });
+      const fetchedEmployees = await fetchEmployees({ 
+        regionId,
+        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        search: searchQuery.trim() || undefined,
+      });
       const mappedEmployees = fetchedEmployees.map(mapEmployeeToDisplay);
       setEmployees(mappedEmployees);
     } catch (error) {
@@ -84,7 +89,7 @@ export default function EmployeesPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedOffice, isGlobalView]);
+  }, [selectedOffice, isGlobalView, roleFilter, statusFilter, searchQuery]);
 
   useEffect(() => {
     if (user) {
@@ -92,22 +97,8 @@ export default function EmployeesPage() {
     }
   }, [user, loadEmployees]);
 
-
-  // Filter and search employees
-  const filteredEmployees = useMemo(() => {
-    return employees.filter((employee) => {
-      const matchesSearch =
-        employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        employee.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        employee.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        employee.role.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
-      const matchesRole = roleFilter === "all" || employee.role === roleFilter;
-
-      return matchesSearch && matchesStatus && matchesRole;
-    });
-  }, [employees, searchQuery, statusFilter, roleFilter]);
+  // No need for client-side filtering since we're filtering on the backend
+  const filteredEmployees = employees;
 
   // Paginate employees
   const paginatedEmployees = useMemo(() => {
@@ -117,10 +108,13 @@ export default function EmployeesPage() {
 
   const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change and reload data
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, roleFilter]);
+    if (user) {
+      loadEmployees();
+    }
+  }, [searchQuery, statusFilter, roleFilter, user, loadEmployees]);
 
   if (!user) return null;
 
@@ -130,8 +124,6 @@ export default function EmployeesPage() {
         return "default";
       case "inactive":
         return "secondary";
-      case "on_leave":
-        return "outline";
       default:
         return "secondary";
     }
@@ -200,7 +192,7 @@ export default function EmployeesPage() {
 
         {/* Stats */}
         {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -220,18 +212,6 @@ export default function EmployeesPage() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {employees.filter((e) => e.status === "active").length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                On Leave
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {employees.filter((e) => e.status === "on_leave").length}
               </div>
             </CardContent>
           </Card>
@@ -269,7 +249,6 @@ export default function EmployeesPage() {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="on_leave">On Leave</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>

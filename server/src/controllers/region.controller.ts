@@ -31,7 +31,7 @@ export const getAvailableRegionalOffices = async (
       .limit(1);
 
     if (!userData) {
-      return next(new AppError("User not found", 404));
+      return next(new AppError("User not found in database. Please log in again or ensure the database is seeded.", 404));
     }
 
     // Administrators, Knowledge Champions, and Executive Leadership can see all regions
@@ -104,7 +104,7 @@ export const getRegionalOfficeById = async (
       .limit(1);
 
     if (!userData) {
-      return next(new AppError("User not found", 404));
+      return next(new AppError("User not found in database. Please log in again or ensure the database is seeded.", 404));
     }
 
     const canSeeAllRegions = 
