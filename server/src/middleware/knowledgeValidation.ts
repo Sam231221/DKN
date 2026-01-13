@@ -4,7 +4,7 @@ import { AppError } from "./errorHandler";
 
 export const handleValidationErrors = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   const errors = validationResult(req);
@@ -19,7 +19,7 @@ export const handleValidationErrors = (
 };
 
 // Middleware to parse JSON strings in FormData (like tags)
-const parseFormDataJson = (req: Request, res: Response, next: NextFunction) => {
+const parseFormDataJson = (req: Request, _res: Response, next: NextFunction) => {
   // Parse tags if it's a JSON string (from FormData)
   if (req.body.tags && typeof req.body.tags === "string") {
     try {
@@ -89,8 +89,8 @@ export const validateKnowledgeUpload = [
 
 // Validate file upload (used as custom validator in controller)
 export const validateFileUpload = (
-  req: Request,
-  res: Response,
+  _req: Request,
+  _res: Response,
   next: NextFunction
 ) => {
   // File validation is handled in the controller after multer processes the file

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
 import { users, contributions } from "../db/schema";
-import { eq, and, or, ilike, sql, count, inArray } from "drizzle-orm";
+import { eq, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -94,7 +94,10 @@ export const getUsers = async (
 
     // Role filter
     if (role && role !== "all") {
-      conditions.push(eq(users.role, role as string));
+      const validRoles = ["client", "employee", "consultant", "knowledge_champion", "administrator", "executive_leadership", "knowledge_council_member"] as const;
+      if (validRoles.includes(role as typeof validRoles[number])) {
+        conditions.push(eq(users.role, role as typeof validRoles[number]));
+      }
     }
 
     // Status filter

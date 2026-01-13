@@ -41,9 +41,9 @@ const sanitizeErrorMessage = (error: any): string => {
 
 export const errorHandler = (
   err: any,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   // Log full error details on the server for debugging
   console.error("Error details:", {
@@ -123,6 +123,8 @@ export const errorHandler = (
           status: "error",
           message: "Request timed out. Please try again.",
         });
+      default:
+        break;
     }
   }
 
@@ -142,7 +144,7 @@ export const errorHandler = (
       ? "An internal server error occurred. Please try again later."
       : sanitizedMessage;
 
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     status,
     message: userMessage || "An error occurred",
     ...(isDevelopment && { 

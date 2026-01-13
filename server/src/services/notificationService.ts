@@ -107,7 +107,7 @@ export async function sendRejectionNotification(
 export async function sendOrganizationNotification(
   organizationName: string,
   knowledgeItemId: string,
-  title: string,
+  _title: string,
   message: string
 ): Promise<void> {
   if (!organizationName) {

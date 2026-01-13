@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
 import { db } from "../db/connection";
 import { users, userInterests } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../services/emailService";
 
@@ -55,10 +55,13 @@ export const login = async (
       .where(eq(userInterests.userId, user.id));
 
     // Generate JWT token
+    const jwtSecret: string = process.env.JWT_SECRET || "default-secret";
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "7d") as string;
+    const signOptions: SignOptions = { expiresIn: expiresIn as any };
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || "default-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      jwtSecret,
+      signOptions
     );
 
     // Remove password from response
@@ -310,10 +313,13 @@ export const register = async (
       .returning();
 
     // Generate token
+    const jwtSecret: string = process.env.JWT_SECRET || "default-secret";
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "7d") as string;
+    const signOptions: SignOptions = { expiresIn: expiresIn as any };
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || "default-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      jwtSecret,
+      signOptions
     );
 
     // Remove password from response

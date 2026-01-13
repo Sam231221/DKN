@@ -1,6 +1,6 @@
 import { db } from "../db/connection";
 import { knowledgeItems } from "../db/schema";
-import { like, or, and, ne } from "drizzle-orm";
+import { ne } from "drizzle-orm";
 // @ts-ignore - string-similarity doesn't have official types
 import { compareTwoStrings } from "string-similarity";
 

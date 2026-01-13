@@ -1,4 +1,4 @@
-import multer, { FileFilterCallback } from "multer";
+import multer from "multer";
 import type { Request } from "express";
 
 // Configure storage
@@ -9,7 +9,7 @@ const storage = multer.memoryStorage(); // Store files in memory for processing
 // File size is validated by multer's limits.fileSize and in the controller
 // Here we only validate file type and extension
 const fileFilter = (
-  req: Request,
+  _req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
@@ -18,7 +18,7 @@ const fileFilter = (
   const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'zip', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
   
   if (!ext || !allowedExtensions.includes(ext)) {
-    return cb(new Error("File extension not allowed"), false);
+    return cb(new Error("File extension not allowed") as any, false);
   }
 
   // Validate MIME type
@@ -41,7 +41,7 @@ const fileFilter = (
   ];
 
   if (!allowedMimeTypes.includes(file.mimetype)) {
-    return cb(new Error("File type not allowed"), false);
+    return cb(new Error("File type not allowed") as any, false);
   }
 
   cb(null, true);

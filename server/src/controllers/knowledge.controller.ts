@@ -345,7 +345,7 @@ export const createKnowledgeItem = async (
       complianceResult = await checkCompliance(
         title,
         itemContent,
-        userRegionName
+        userRegionName || undefined
       );
     } catch (error) {
       console.error("Compliance check error:", error);

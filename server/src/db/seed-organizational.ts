@@ -370,7 +370,7 @@ function generateProjectCode(index: number): string {
   return `PRJ-${year}-${String(index).padStart(3, "0")}`;
 }
 
-function getDepartmentForUser(role: string, regionName: string): string {
+function getDepartmentForUser(role: string, _regionName: string): string {
   // Derive department from role and region
   const departments = ["Engineering", "Consulting", "Product", "IT"];
 

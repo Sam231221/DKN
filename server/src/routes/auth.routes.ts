@@ -1,10 +1,7 @@
 import { Router } from "express";
-import { login, register, signup, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/auth.controller";
+import { login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/auth.controller";
 import {
   validateLogin,
-  validateSignupStep1,
-  validateSignupStep2,
-  validateSignupStep3,
   validateEmailVerification,
   validateResendVerification,
   validatePasswordReset,
@@ -12,8 +9,6 @@ import {
 } from "../middleware/validation";
 import {
   loginRateLimiter,
-  signupRateLimiter,
-  authRateLimiter,
   emailRateLimiter,
 } from "../middleware/rateLimiter";
 

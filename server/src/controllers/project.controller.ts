@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../db/connection";
 import { projects, clients, users } from "../db/schema";
-import { eq, and, or, ilike } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth.middleware";
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { db } from "../db/connection";
 import { users, invitations, userInterests } from "../db/schema";
 import { eq, and } from "drizzle-orm";
@@ -325,7 +325,7 @@ export const activateAccount = async (
         username: username || null,
         address: address || null,
         experienceLevel: experienceLevel || null,
-        role: invitation.role,
+        role: invitation.role || "employee",
         organizationType: invitation.organizationName ? "organizational" : "individual",
         organizationName: invitation.organizationName || null,
       })
@@ -351,10 +351,13 @@ export const activateAccount = async (
     }
 
     // Generate JWT token
+    const jwtSecret: string = process.env.JWT_SECRET || "default-secret";
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "7d") as string;
+    const signOptions: SignOptions = { expiresIn: expiresIn as any };
     const jwtToken = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || "default-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      jwtSecret,
+      signOptions
     );
 
     // Fetch user with interests
