@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { db } from "../db/connection.js";
 import { comments, users, knowledgeItems, contributions } from "../db/schema/index.js";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { sendCommentNotification } from "../services/notificationService.js";
@@ -229,7 +229,7 @@ export const updateComment = async (
     }
 
     // Update comment
-    const [updatedComment] = await db
+    await db
       .update(comments)
       .set({
         content: content.trim(),

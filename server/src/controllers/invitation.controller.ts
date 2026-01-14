@@ -325,7 +325,7 @@ export const activateAccount = async (
         username: username || null,
         address: address || null,
         experienceLevel: experienceLevel || null,
-        role: invitation.role || "employee",
+        role: invitation.role || "consultant",
         organizationType: invitation.organizationName ? "organizational" : "individual",
         organizationName: invitation.organizationName || null,
       })

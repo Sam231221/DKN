@@ -387,6 +387,7 @@ export const notifications = pgTable("notifications", {
 });
 
 // Comments - For collaboration and discussions on knowledge items
+// @ts-expect-error - Circular reference with parentCommentId is supported by Drizzle ORM
 export const comments = pgTable("comments", {
   id: text("id")
     .primaryKey()
@@ -398,6 +399,7 @@ export const comments = pgTable("comments", {
     .references(() => users.id)
     .notNull(),
   content: text("content").notNull(),
+  // @ts-expect-error - Circular reference is supported by Drizzle ORM
   parentCommentId: text("parent_comment_id").references(() => comments.id, {
     onDelete: "cascade",
   }), // For threaded replies

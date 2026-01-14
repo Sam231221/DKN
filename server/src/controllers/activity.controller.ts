@@ -1,13 +1,10 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { db } from "../db/connection.js";
 import {
   activityFeed,
   users,
-  knowledgeItems,
-  comments,
-  projects,
 } from "../db/schema/index.js";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { db } from "../db/connection.js";
 import {
   projects,
@@ -10,7 +10,6 @@ import {
 import { eq, and, or, ilike, isNull } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
-import { getUserOrganizationName } from "../utils/userHelpers.js";
 
 export const unifiedSearch = async (
   req: AuthRequest,
@@ -183,7 +182,9 @@ export const unifiedSearch = async (
 
     // Organization filtering for knowledge items
     if (userData.role !== "administrator" && userData.organizationName) {
-      knowledgeConditions.push(eq(users.organizationName, userData.organizationName));
+      knowledgeConditions.push(
+        eq(users.organizationName, userData.organizationName)
+      );
     }
 
     // Region filtering for knowledge items
@@ -217,7 +218,9 @@ export const unifiedSearch = async (
         : [];
 
     const knowledgeResults = allKnowledgeItems.map((item) => {
-      const repository = repositoriesData.find((r) => r.id === item.repositoryId);
+      const repository = repositoriesData.find(
+        (r) => r.id === item.repositoryId
+      );
       return {
         type: "knowledge" as const,
         id: item.id,

@@ -225,8 +225,8 @@ export async function sendWorkspaceMemberNotification(
  */
 export async function sendWorkspaceActivityNotification(
   projectId: string,
-  activityType: string,
-  activityTitle: string,
+  _activityType: string,
+  _activityTitle: string,
   activityDescription: string,
   userId: string
 ): Promise<void> {

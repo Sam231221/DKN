@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { db } from "../db/connection.js";
 import {
   workspaceMembers,
@@ -7,13 +7,10 @@ import {
   knowledgeItems,
   comments,
 } from "../db/schema/index.js";
-import { eq, and, or, desc, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
-import {
-  sendWorkspaceMemberNotification,
-  sendWorkspaceActivityNotification,
-} from "../services/notificationService.js";
+import { sendWorkspaceMemberNotification } from "../services/notificationService.js";
 
 // Get all workspaces (projects) for a user
 export const getUserWorkspaces = async (
