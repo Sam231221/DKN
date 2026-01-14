@@ -126,7 +126,7 @@ export default function RepositoriesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {repositories.reduce((sum, repo) => sum + repo.itemCount, 0)}
+                {repositories.reduce((sum, repo) => sum + (repo.itemCount || 0), 0)}
               </div>
             </CardContent>
           </Card>

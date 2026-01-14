@@ -8,7 +8,7 @@ import {
   regions,
   contributions,
 } from "./schema/index.js";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 
@@ -408,8 +408,6 @@ function generateProjectCode(index: number): string {
 
 function getDepartmentForUser(role: string, _regionName: string): string {
   // Derive department from role and region
-  const departments = ["Engineering", "Consulting", "Product", "IT"];
-
   // Administrators and Knowledge Champions typically in Engineering or IT
   if (role === "administrator" || role === "knowledge_champion") {
     return getRandomElement(["Engineering", "IT"]);
@@ -763,7 +761,9 @@ async function seedOrganizational() {
       console.log(`  ✓ Created client company: ${clientName}`);
     }
 
-    console.log(`  ✓ Created ${externalClients.length} external client companies`);
+    console.log(
+      `  ✓ Created ${externalClients.length} external client companies`
+    );
 
     // ========================================================================
     // STEP 4: Create Projects
@@ -1055,6 +1055,60 @@ async function seedOrganizational() {
     }
 
     console.log(`  ✓ Created ${commentCount} comment contributions`);
+
+    // ========================================================================
+    // STEP 8: Update Repository Counts
+    // ========================================================================
+    console.log("\n📊 Step 8: Updating repository counts...");
+
+    // Update itemCount for each repository
+    for (const repository of allRepositories) {
+      const itemCountResult = await db
+        .select({ count: count() })
+        .from(knowledgeItems)
+        .where(eq(knowledgeItems.repositoryId, repository.id));
+
+      const itemCount = itemCountResult[0]?.count || 0;
+
+      // Get unique contributors for this repository
+      // Contributors include both users who made contributions AND authors of knowledge items
+      const allContributorsResult = await db
+        .select({
+          userId: contributions.userId,
+        })
+        .from(contributions)
+        .innerJoin(
+          knowledgeItems,
+          eq(contributions.knowledgeItemId, knowledgeItems.id)
+        )
+        .where(eq(knowledgeItems.repositoryId, repository.id));
+
+      const allAuthorsResult = await db
+        .select({
+          userId: knowledgeItems.authorId,
+        })
+        .from(knowledgeItems)
+        .where(eq(knowledgeItems.repositoryId, repository.id));
+
+      // Combine contributors and authors, removing duplicates
+      const contributorIds = new Set([
+        ...allContributorsResult.map((r) => r.userId).filter(Boolean),
+        ...allAuthorsResult.map((r) => r.userId).filter(Boolean),
+      ]);
+      const totalContributorCount = contributorIds.size;
+
+      await db
+        .update(repositories)
+        .set({
+          itemCount: itemCount,
+          contributorCount: totalContributorCount,
+        })
+        .where(eq(repositories.id, repository.id));
+
+      console.log(
+        `  ✓ Updated ${repository.name}: ${itemCount} items, ${totalContributorCount} contributors`
+      );
+    }
 
     // ========================================================================
     // SUMMARY
