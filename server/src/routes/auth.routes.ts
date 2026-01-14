@@ -1,16 +1,16 @@
 import { Router } from "express";
-import { login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/auth.controller";
+import { login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/auth.controller.js";
 import {
   validateLogin,
   validateEmailVerification,
   validateResendVerification,
   validatePasswordReset,
   validateResetPassword,
-} from "../middleware/validation";
+} from "../middleware/validation.js";
 import {
   loginRateLimiter,
   emailRateLimiter,
-} from "../middleware/rateLimiter";
+} from "../middleware/rateLimiter.js";
 
 export const authRoutes = Router();
 

@@ -1,4 +1,4 @@
-import { db } from "./connection";
+import { db } from "./connection.js";
 import {
   knowledgeItems,
   contributions,
@@ -15,7 +15,7 @@ import {
   users,
   complianceRules,
   regions,
-} from "./schema";
+} from "./schema/index.js";
 import * as dotenv from "dotenv";
 
 dotenv.config();

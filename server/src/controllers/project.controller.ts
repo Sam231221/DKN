@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "../db/connection";
-import { projects, clients, users } from "../db/schema";
+import { db } from "../db/connection.js";
+import { projects, clients, users } from "../db/schema/index.js";
 import { eq, or } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 
 export const getProjects = async (
   req: AuthRequest,
@@ -87,11 +87,11 @@ export const getProjects = async (
     // Filter by organization if needed
     let filteredProjects = allProjectsRaw;
     const userRole = userData.role;
-    const canSeeAllRegions = 
-      userRole === "administrator" || 
-      userRole === "knowledge_champion" || 
+    const canSeeAllRegions =
+      userRole === "administrator" ||
+      userRole === "knowledge_champion" ||
       userRole === "executive_leadership";
-    
+
     if (userRole !== "administrator" && userData.organizationName) {
       const orgConsultantIds = new Set(
         consultantsData
@@ -107,7 +107,12 @@ export const getProjects = async (
     if (regionId) {
       if (regionId === "all") {
         if (!canSeeAllRegions) {
-          return next(new AppError("Access denied: Global view requires elevated permissions", 403));
+          return next(
+            new AppError(
+              "Access denied: Global view requires elevated permissions",
+              403
+            )
+          );
         }
         // Show all projects - no additional filtering
       } else {
@@ -117,10 +122,13 @@ export const getProjects = async (
           .select({ id: users.id })
           .from(users)
           .where(eq(users.regionId, regionId as string));
-        
-        const regionConsultantIdSet = new Set(regionConsultants.map(c => c.id));
+
+        const regionConsultantIdSet = new Set(
+          regionConsultants.map((c) => c.id)
+        );
         filteredProjects = filteredProjects.filter(
-          (p) => !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
+          (p) =>
+            !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
         );
       }
     } else if (userData.regionId && !canSeeAllRegions) {
@@ -129,10 +137,11 @@ export const getProjects = async (
         .select({ id: users.id })
         .from(users)
         .where(eq(users.regionId, userData.regionId));
-      
-      const regionConsultantIdSet = new Set(regionConsultants.map(c => c.id));
+
+      const regionConsultantIdSet = new Set(regionConsultants.map((c) => c.id));
       filteredProjects = filteredProjects.filter(
-        (p) => !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
+        (p) =>
+          !p.leadConsultantId || regionConsultantIdSet.has(p.leadConsultantId)
       );
     }
 

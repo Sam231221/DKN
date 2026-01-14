@@ -1,29 +1,29 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "../db/connection";
+import { db } from "../db/connection.js";
 import {
   knowledgeItems,
   users,
   repositories,
   contributions,
-} from "../db/schema";
+} from "../db/schema/index.js";
 import { eq, and, or, ilike, sql, isNull } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import {
   uploadFile,
   generateFileName,
   validateFile as validateFileUtil,
-} from "../utils/fileStorage";
-import { detectDuplicates } from "../services/nlpService";
-import { checkCompliance } from "../services/complianceService";
+} from "../utils/fileStorage.js";
+import { detectDuplicates } from "../services/nlpService.js";
+import { checkCompliance } from "../services/complianceService.js";
 import {
   sendUploadNotification,
   sendReviewNotification,
   sendApprovalNotification,
   sendRejectionNotification,
   sendOrganizationNotification,
-} from "../services/notificationService";
-import { getUserOrganizationName } from "../utils/userHelpers";
+} from "../services/notificationService.js";
+import { getUserOrganizationName } from "../utils/userHelpers.js";
 
 export const getKnowledgeItems = async (
   req: AuthRequest,

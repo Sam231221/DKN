@@ -1,9 +1,9 @@
 import { Response, NextFunction } from "express";
-import { db } from "../db/connection";
-import { regions, users } from "../db/schema";
+import { db } from "../db/connection.js";
+import { regions, users } from "../db/schema/index.js";
 import { eq } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 
 /**
  * Get available regional offices for the current user

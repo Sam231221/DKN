@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.middleware";
+import { authenticate } from "../middleware/auth.middleware.js";
 import {
   getAvailableRegionalOffices,
   getRegionalOfficeById,
   getAllRegions,
-} from "../controllers/region.controller";
+} from "../controllers/region.controller.js";
 
 export const regionRoutes = Router();
 

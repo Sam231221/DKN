@@ -1,5 +1,5 @@
-import { db } from "../db/connection";
-import { complianceRules, regions } from "../db/schema";
+import { db } from "../db/connection.js";
+import { complianceRules, regions } from "../db/schema/index.js";
 import { eq } from "drizzle-orm";
 
 interface ComplianceCheckResult {

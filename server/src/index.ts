@@ -4,17 +4,17 @@ import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import path from "path";
-import { errorHandler } from "./middleware/errorHandler";
-import { notFoundHandler } from "./middleware/notFoundHandler";
-import { authRoutes } from "./routes/auth.routes";
-import { userRoutes } from "./routes/user.routes";
-import { knowledgeRoutes } from "./routes/knowledge.routes";
-import { repositoryRoutes } from "./routes/repository.routes";
-import { notificationRoutes } from "./routes/notification.routes";
-import { invitationRoutes } from "./routes/invitation.routes";
-import { clientRoutes } from "./routes/client.routes";
-import { projectRoutes } from "./routes/project.routes";
-import { regionRoutes } from "./routes/region.routes";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { notFoundHandler } from "./middleware/notFoundHandler.js";
+import { authRoutes } from "./routes/auth.routes.js";
+import { userRoutes } from "./routes/user.routes.js";
+import { knowledgeRoutes } from "./routes/knowledge.routes.js";
+import { repositoryRoutes } from "./routes/repository.routes.js";
+import { notificationRoutes } from "./routes/notification.routes.js";
+import { invitationRoutes } from "./routes/invitation.routes.js";
+import { clientRoutes } from "./routes/client.routes.js";
+import { projectRoutes } from "./routes/project.routes.js";
+import { regionRoutes } from "./routes/region.routes.js";
 
 // Load environment variables
 dotenv.config();

@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
-import { db } from "../db/connection";
-import { users, userInterests } from "../db/schema";
+import { db } from "../db/connection.js";
+import { users, userInterests } from "../db/schema/index.js";
 import { eq } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../services/emailService";
+import { AppError } from "../middleware/errorHandler.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../services/emailService.js";
 
 /**
  * Login controller with industry-standard practices

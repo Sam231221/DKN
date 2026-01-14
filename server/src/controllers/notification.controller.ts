@@ -1,11 +1,11 @@
 import { Response, NextFunction } from "express";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 import {
   getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-} from "../services/notificationService";
+} from "../services/notificationService.js";
 
 /**
  * Get all notifications for the authenticated user

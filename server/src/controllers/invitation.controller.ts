@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { db } from "../db/connection";
-import { users, invitations, userInterests } from "../db/schema";
+import { db } from "../db/connection.js";
+import { users, invitations, userInterests } from "../db/schema/index.js";
 import { eq, and } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
-import { sendInvitationEmail } from "../services/emailService";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
+import { sendInvitationEmail } from "../services/emailService.js";
 import { createId } from "@paralleldrive/cuid2";
 
 /**

@@ -1,7 +1,7 @@
-import { db } from "../db/connection";
-import { users } from "../db/schema";
+import { db } from "../db/connection.js";
+import { users } from "../db/schema/index.js";
 import { eq } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
+import { AppError } from "../middleware/errorHandler.js";
 
 /**
  * Get user's organization name from database

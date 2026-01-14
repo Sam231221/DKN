@@ -1,4 +1,4 @@
-import { db } from "./connection";
+import { db } from "./connection.js";
 import {
   users,
   clients,
@@ -7,7 +7,7 @@ import {
   knowledgeItems,
   regions,
   contributions,
-} from "./schema";
+} from "./schema/index.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";

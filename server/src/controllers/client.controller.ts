@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "../db/connection";
-import { clients, users } from "../db/schema";
+import { db } from "../db/connection.js";
+import { clients, users } from "../db/schema/index.js";
 import { eq, and } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler";
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AppError } from "../middleware/errorHandler.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 
 export const getClients = async (
   req: AuthRequest,

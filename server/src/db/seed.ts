@@ -1,5 +1,5 @@
-import { db } from "./connection";
-import { users, repositories, knowledgeItems } from "./schema";
+import { db } from "./connection.js";
+import { users, repositories, knowledgeItems } from "./schema/index.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";

@@ -1,15 +1,15 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.middleware";
-import { validateKnowledgeUpload } from "../middleware/knowledgeValidation";
-import { uploadSingle } from "../middleware/upload";
-import { AppError } from "../middleware/errorHandler";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { validateKnowledgeUpload } from "../middleware/knowledgeValidation.js";
+import { uploadSingle } from "../middleware/upload.js";
+import { AppError } from "../middleware/errorHandler.js";
 import {
   getKnowledgeItems,
   getKnowledgeItemById,
   createKnowledgeItem,
   updateKnowledgeItem,
   deleteKnowledgeItem,
-} from "../controllers/knowledge.controller";
+} from "../controllers/knowledge.controller.js";
 
 export const knowledgeRoutes = Router();
 

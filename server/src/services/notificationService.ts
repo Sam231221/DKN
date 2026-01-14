@@ -1,5 +1,5 @@
-import { db } from "../db/connection";
-import { notifications, users } from "../db/schema";
+import { db } from "../db/connection.js";
+import { notifications, users } from "../db/schema/index.js";
 import { eq, and, or } from "drizzle-orm";
 
 export type NotificationType =

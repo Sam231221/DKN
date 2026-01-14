@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.middleware";
-import { authorize } from "../middleware/auth.middleware";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { authorize } from "../middleware/auth.middleware.js";
 import {
   createInvitation,
   createBulkInvitations,
   activateAccount,
   getInvitation,
-} from "../controllers/invitation.controller";
+} from "../controllers/invitation.controller.js";
 
 export const invitationRoutes = Router();
 
