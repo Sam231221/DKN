@@ -26,6 +26,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - Required for Vercel/serverless environments
+// This allows Express to trust the X-Forwarded-For header from proxies
+app.set("trust proxy", true);
+
 // Middleware
 app.use(helmet());
 app.use(
