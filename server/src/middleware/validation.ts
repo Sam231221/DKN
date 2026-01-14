@@ -160,14 +160,15 @@ export const validateSignupStep3 = [
         "knowledge_champion",
         "consultant",
         "executive_leadership",
+        "knowledge_council_member",
       ];
       if (!validRoles.includes(value)) {
         throw new Error(
-          "Role must be one of: knowledge_champion, consultant, executive_leadership"
+          "Role must be one of: knowledge_champion, consultant, executive_leadership, knowledge_council_member"
         );
       }
     }
-    // For individual accounts, role is optional (will default to "client")
+    // For individual accounts, role is optional (will default to "consultant")
     return true;
   }),
   body("interests")

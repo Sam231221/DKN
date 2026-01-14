@@ -144,7 +144,7 @@ export const signup = async (
     // Combine first and last name for the name field (backward compatibility)
     const fullName = `${firstName} ${lastName}`.trim();
 
-    // Determine role: required for organizational, default to "client" for individual
+    // Determine role: required for organizational, default to "consultant" for individual
     let finalRole: string;
     if (organizationType === "organizational") {
       if (!role) {
@@ -154,14 +154,12 @@ export const signup = async (
       }
       finalRole = role;
     } else {
-      // For individual accounts, default to "client"
-      finalRole = "client";
+      // For individual accounts, default to "consultant"
+      finalRole = "consultant";
     }
 
     // Validate role enum value
     const validRoles = [
-      "client",
-      "employee",
       "consultant",
       "knowledge_champion",
       "administrator",
@@ -308,7 +306,7 @@ export const register = async (
         email: email.toLowerCase(),
         password: hashedPassword,
         name,
-        role: role || "client",
+        role: role || "consultant",
       })
       .returning();
 

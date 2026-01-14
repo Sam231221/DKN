@@ -57,7 +57,7 @@ export default function SettingsPage() {
 
   if (!user) return null;
 
-  const permissions = rolePermissions[user.role as UserRole] || rolePermissions.employee;
+  const permissions = rolePermissions[user.role as UserRole] || rolePermissions.consultant;
 
   return (
     <OrganizationDashboardLayout user={user}>

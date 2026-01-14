@@ -2,6 +2,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { AccessDenied } from "@/components/auth/access-denied";
+import type { UserRole } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -64,11 +67,23 @@ const mapEmployeeToDisplay = (emp: EmployeeType): Employee => {
 export default function EmployeesPage() {
   const { user } = useAuth();
   const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
+  const userRole = (user?.role || "consultant") as UserRole;
+  const { canViewPage } = useRoleAccess({ role: userRole });
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+
+  // Check access
+  if (!canViewPage("employees")) {
+    return (
+      <AccessDenied
+        requiredRole={["administrator", "executive_leadership", "knowledge_champion"]}
+        pageName="Employees"
+      />
+    );
+  }
   const [currentPage, setCurrentPage] = useState(1);
 
   const loadEmployees = useCallback(async () => {

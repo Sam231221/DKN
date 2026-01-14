@@ -75,8 +75,6 @@ const EXPERIENCE_LEVEL_OPTIONS = [
 ];
 
 const ROLE_LABELS: Record<string, string> = {
-  client: "Client",
-  employee: "Employee",
   consultant: "Consultant",
   knowledge_champion: "Knowledge Champion",
   administrator: "Administrator",

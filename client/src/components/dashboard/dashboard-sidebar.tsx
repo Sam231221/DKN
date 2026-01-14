@@ -1,40 +1,31 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Users,
-  Award,
-  Search,
-  Settings,
-  LogOut,
-  TrendingUp,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import type { UserRole } from "@/lib/permissions";
+import { sidebarItems } from "@/lib/rbac";
 
 interface DashboardSidebarProps {
   user: any;
 }
 
-const allNavigation = [
-  { name: "Explore", href: "/explore", icon: LayoutDashboard, roles: ["all"] },
-  { name: "Search", href: "/explore/search", icon: Search, roles: ["all"] },
-  { name: "Trending", href: "/explore/trending", icon: TrendingUp, roles: ["all"] },
-  { name: "Contributors", href: "/explore/contributors", icon: Users, roles: ["all"] },
-  { name: "Leaderboard", href: "/explore/leaderboard", icon: Award, roles: ["all"] },
-  { name: "Settings", href: "/explore/settings", icon: Settings, roles: ["all"] },
-];
-
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const userRole = user?.role || "client";
+  const userRole = (user?.role || "consultant") as UserRole;
 
-  // Filter navigation based on role
-  // Clients have read-only access (all items visible but with limited functionality)
-  const navigation = allNavigation.filter((item) => {
-    if (item.roles.includes("all")) return true;
-    return item.roles.includes(userRole);
-  });
+  // Use RBAC hook for role-based access
+  // Filter to only show explore-related items (not organization dashboard items)
+  const { sidebarItems } = useRoleAccess({ role: userRole });
+  const navigation = sidebarItems.filter((item) => 
+    item.path.startsWith("/explore") || 
+    item.id === "search" || 
+    item.id === "trending" || 
+    item.id === "contributors" || 
+    item.id === "leaderboard" || 
+    item.id === "settings"
+  );
 
   const handleLogout = () => {
     // Clear both token and user
@@ -60,11 +51,12 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="flex-1 overflow-y-auto p-4">
         <nav className="space-y-1">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.path || location.pathname === item.path.replace("/dashboard", "/explore");
+            const Icon = item.icon;
             return (
               <Link
-                key={item.name}
-                to={item.href}
+                key={item.id}
+                to={item.path.startsWith("/dashboard") ? item.path.replace("/dashboard", "/explore") : item.path}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                   isActive
@@ -72,8 +64,13 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+                <Icon className="h-5 w-5" />
+                {item.label}
+                {item.badge && (
+                  <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

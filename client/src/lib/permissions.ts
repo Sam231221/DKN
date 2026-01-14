@@ -1,4 +1,4 @@
-export type UserRole = "client" | "employee" | "consultant" | "knowledge_champion" | "administrator"
+export type UserRole = "consultant" | "knowledge_champion" | "administrator" | "executive_leadership" | "knowledge_council_member"
 
 export interface Permission {
   canView: boolean
@@ -11,24 +11,6 @@ export interface Permission {
 }
 
 export const rolePermissions: Record<UserRole, Permission> = {
-  client: {
-    canView: true,
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    canValidate: false,
-    canManageUsers: false,
-    canAccessAnalytics: false,
-  },
-  employee: {
-    canView: true,
-    canCreate: true,
-    canEdit: true,
-    canDelete: false,
-    canValidate: false,
-    canManageUsers: false,
-    canAccessAnalytics: false,
-  },
   consultant: {
     canView: true,
     canCreate: true,
@@ -56,6 +38,24 @@ export const rolePermissions: Record<UserRole, Permission> = {
     canManageUsers: true,
     canAccessAnalytics: true,
   },
+  executive_leadership: {
+    canView: true,
+    canCreate: true,
+    canEdit: true,
+    canDelete: false,
+    canValidate: true,
+    canManageUsers: false,
+    canAccessAnalytics: true,
+  },
+  knowledge_council_member: {
+    canView: true,
+    canCreate: true,
+    canEdit: true,
+    canDelete: false,
+    canValidate: true,
+    canManageUsers: false,
+    canAccessAnalytics: true,
+  },
 }
 
 export function hasPermission(role: UserRole, permission: keyof Permission): boolean {
@@ -64,11 +64,11 @@ export function hasPermission(role: UserRole, permission: keyof Permission): boo
 
 export function getRoleBadgeColor(role: UserRole): string {
   const colors = {
-    client: "bg-blue-500/10 text-blue-500",
-    employee: "bg-green-500/10 text-green-500",
     consultant: "bg-purple-500/10 text-purple-500",
     knowledge_champion: "bg-yellow-500/10 text-yellow-500",
     administrator: "bg-red-500/10 text-red-500",
+    executive_leadership: "bg-indigo-500/10 text-indigo-500",
+    knowledge_council_member: "bg-teal-500/10 text-teal-500",
   }
   return colors[role] || "bg-gray-500/10 text-gray-500"
 }

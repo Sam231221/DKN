@@ -3,11 +3,11 @@ export interface DummyUser {
   password: string;
   name: string;
   role:
-    | "client"
-    | "employee"
     | "consultant"
     | "knowledge_champion"
-    | "administrator";
+    | "administrator"
+    | "executive_leadership"
+    | "knowledge_council_member";
   avatar?: string;
   points?: number;
   contributions?: number;

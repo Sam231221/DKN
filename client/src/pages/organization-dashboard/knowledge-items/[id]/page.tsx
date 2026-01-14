@@ -396,7 +396,7 @@ export default function KnowledgeItemDetailPage() {
         onOpenChange={setShowEditDialog}
         itemId={id || null}
         onSuccess={handleEditSuccess}
-        user={user ? { id: user.id || "", role: user.role || "employee" } : undefined}
+        user={user ? { id: user.id || "", role: user.role || "consultant" } : undefined}
       />
       <DeleteKnowledgeDialog
         open={showDeleteDialog}

@@ -44,11 +44,11 @@ export function ContributorsFilters({ onFiltersChange = () => {} }: Contributors
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Roles</SelectItem>
-          <SelectItem value="client">Client</SelectItem>
-          <SelectItem value="employee">Employee</SelectItem>
           <SelectItem value="consultant">Consultant</SelectItem>
           <SelectItem value="knowledge_champion">Knowledge Champion</SelectItem>
           <SelectItem value="administrator">Administrator</SelectItem>
+          <SelectItem value="executive_leadership">Executive Leadership</SelectItem>
+          <SelectItem value="knowledge_council_member">Knowledge Council Member</SelectItem>
         </SelectContent>
       </Select>
       <Select value={status} onValueChange={setStatus}>

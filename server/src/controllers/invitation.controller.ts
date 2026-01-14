@@ -87,7 +87,7 @@ export const createInvitation = async (
         email: email.toLowerCase(),
         token,
         organizationName: finalOrganizationName,
-        role: role || "employee",
+        role: role || "consultant",
         invitedBy: req.user.id,
         expiresAt,
       })
@@ -220,7 +220,7 @@ export const createBulkInvitations = async (
             email: emailLower,
             token,
             organizationName: finalOrganizationName,
-            role: role || "employee",
+            role: role || "consultant",
             invitedBy: req.user.id,
             expiresAt,
           })

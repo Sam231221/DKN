@@ -70,7 +70,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
 
   const userInitial =
     user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || "U";
-  const userRole = user.role || "client";
+  const userRole = user.role || "consultant";
 
   return (
     <div className="relative" ref={dropdownRef}>

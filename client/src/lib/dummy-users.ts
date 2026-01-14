@@ -3,11 +3,11 @@ export interface DummyUser {
   password: string;
   name: string;
   role:
-    | "client"
-    | "employee"
     | "consultant"
     | "knowledge_champion"
-    | "administrator";
+    | "administrator"
+    | "executive_leadership"
+    | "knowledge_council_member";
   avatar?: string;
   points?: number;
   contributions?: number;
@@ -27,22 +27,22 @@ export const DUMMY_USERS: DummyUser[] = [
     role: "knowledge_champion",
   },
   {
-    email: "mei.zhang@velion.com",
-    password: "password123",
-    name: "Mei Zhang",
-    role: "employee",
-  },
-  {
     email: "anjali.patel@velion.com",
     password: "password123",
     name: "Anjali Patel",
     role: "consultant",
   },
   {
-    email: "contact@ecopowersystems.com",
+    email: "david.martinez@velion.com",
     password: "password123",
-    name: "Lisa Anderson",
-    role: "client",
+    name: "David Martinez",
+    role: "executive_leadership",
+  },
+  {
+    email: "sophie.nielsen@velion.com",
+    password: "password123",
+    name: "Sophie Nielsen",
+    role: "knowledge_council_member",
   },
 ];
 

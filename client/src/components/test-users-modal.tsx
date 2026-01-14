@@ -12,13 +12,13 @@ export function TestUsersModal() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  // Select 3 users with distinct roles: administrator, knowledge_champion, and employee
+  // Select users with distinct roles: administrator, knowledge_champion, consultant, executive_leadership, and knowledge_council_member
   const testUsers = [
     DUMMY_USERS.find((u) => u.role === "administrator")!,
     DUMMY_USERS.find((u) => u.role === "knowledge_champion")!,
-    DUMMY_USERS.find((u) => u.role === "employee")!,
     DUMMY_USERS.find((u) => u.role === "consultant")!,
-    DUMMY_USERS.find((u) => u.role === "client")!,
+    DUMMY_USERS.find((u) => u.role === "executive_leadership")!,
+    DUMMY_USERS.find((u) => u.role === "knowledge_council_member")!,
   ];
 
   const copyToClipboard = (text: string, index: number) => {

@@ -94,7 +94,7 @@ export const getUsers = async (
 
     // Role filter
     if (role && role !== "all") {
-      const validRoles = ["client", "employee", "consultant", "knowledge_champion", "administrator", "executive_leadership", "knowledge_council_member"] as const;
+      const validRoles = ["consultant", "knowledge_champion", "administrator", "executive_leadership", "knowledge_council_member"] as const;
       if (validRoles.includes(role as typeof validRoles[number])) {
         conditions.push(eq(users.role, role as typeof validRoles[number]));
       }

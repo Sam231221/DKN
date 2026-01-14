@@ -205,7 +205,7 @@ export default function KnowledgeItemsPage() {
           key={refreshKey}
           type={typeFilter}
           search={searchQuery}
-          user={user ? { id: user.id || "", role: user.role || "employee" } : undefined}
+          user={user ? { id: user.id || "", role: user.role || "consultant" } : undefined}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
@@ -221,7 +221,7 @@ export default function KnowledgeItemsPage() {
           onOpenChange={setShowEditDialog}
           itemId={selectedItem?.id || null}
           onSuccess={handleEditSuccess}
-          user={user ? { id: user.id || "", role: user.role || "employee" } : undefined}
+          user={user ? { id: user.id || "", role: user.role || "consultant" } : undefined}
         />
         <DeleteKnowledgeDialog
           open={showDeleteDialog}

@@ -2,6 +2,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { AccessDenied } from "@/components/auth/access-denied";
+import type { UserRole } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,11 +64,23 @@ const ITEMS_PER_PAGE = 5;
 export default function ClientsPage() {
   const { user } = useAuth();
   const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
+  const userRole = (user?.role || "consultant") as UserRole;
+  const { canViewPage } = useRoleAccess({ role: userRole });
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Check access
+  if (!canViewPage("clients")) {
+    return (
+      <AccessDenied
+        requiredRole={["administrator", "executive_leadership"]}
+        pageName="Clients"
+      />
+    );
+  }
 
   const loadClients = useCallback(async () => {
     try {

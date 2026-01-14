@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Search,
   LayoutGrid,
@@ -13,8 +15,15 @@ import {
   ExternalLink,
   Github,
   TrendingUp,
+  FileCheck,
+  Users,
+  BarChart3,
+  Shield,
+  Award,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/lib/permissions";
 
 // Knowledge management metrics aligned with case study
 const knowledgeMetrics = [
@@ -188,10 +197,17 @@ function ProjectCard({ project }: { project: (typeof mockProjects)[0] }) {
 export default function OrganizationDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const userRole = (user?.role || "consultant") as UserRole;
+  const { canAccessFeature, hasPermission } = useRoleAccess({ role: userRole });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
   if (!user) return null;
+
+  // Role-specific widget visibility
+  const showPendingValidations = hasPermission("canValidate");
+  const showTeamStats = canAccessFeature("overview", "viewTeamStats");
+  const showOrgStats = canAccessFeature("overview", "viewOrgStats");
 
   const filteredProjects = mockProjects.filter(
     (project) =>
@@ -297,6 +313,122 @@ export default function OrganizationDashboardPage() {
                 })}
               </CardContent>
             </Card>
+
+            {/* Role-Specific Widgets */}
+            {showPendingValidations && (
+              <Card className="bg-yellow-500/10 border-yellow-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileCheck className="h-4 w-4" />
+                    Pending Validations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Items awaiting review</span>
+                      <Badge variant="outline">12</Badge>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => navigate("/dashboard/knowledge-items?status=pending_review")}
+                    >
+                      Review Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {showTeamStats && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Team Statistics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Team Contributions</span>
+                    <span className="font-medium">1,247</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Team Members</span>
+                    <span className="font-medium">342</span>
+                  </div>
+                  {canAccessFeature("analytics", "viewSystemAnalytics") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => navigate("/dashboard/analytics")}
+                    >
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      View Analytics
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {showOrgStats && (
+              <Card className="bg-indigo-500/10 border-indigo-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Organizational Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Cross-Regional Projects</span>
+                    <span className="font-medium">87</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Global Contributors</span>
+                    <span className="font-medium">1,200+</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => navigate("/dashboard/analytics")}
+                  >
+                    View Full Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {userRole === "knowledge_council_member" && (
+              <Card className="bg-teal-500/10 border-teal-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Governance Queue
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Items to audit</span>
+                      <Badge variant="outline">8</Badge>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => navigate("/dashboard/governance")}
+                    >
+                      Go to Governance
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Connect to Grow Program Section */}
             <Card className="bg-muted/30 border-border">
