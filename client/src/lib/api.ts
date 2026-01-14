@@ -231,15 +231,15 @@ export interface KnowledgeItemsStats {
 
 export async function fetchKnowledgeItemsStats(): Promise<KnowledgeItemsStats> {
   // Fetch all items and calculate stats
-  const items = await fetchKnowledgeItems();
+  const response = await fetchKnowledgeItems();
 
   const stats: KnowledgeItemsStats = {
-    total: items.length,
-    approved: items.filter((item) => item.status === "approved").length,
-    pending: items.filter((item) => item.status === "pending_review").length,
-    rejected: items.filter((item) => item.status === "rejected").length,
-    draft: items.filter((item) => item.status === "draft").length,
-    archived: items.filter((item) => item.status === "archived").length,
+    total: response.data.length,
+    approved: response.data.filter((item) => item.status === "approved").length,
+    pending: response.data.filter((item) => item.status === "pending_review").length,
+    rejected: response.data.filter((item) => item.status === "rejected").length,
+    draft: response.data.filter((item) => item.status === "draft").length,
+    archived: response.data.filter((item) => item.status === "archived").length,
   };
 
   return stats;

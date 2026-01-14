@@ -33,7 +33,7 @@ export default function DashboardPage() {
     try {
       setLoading(true)
       const fetchedItems = await fetchKnowledgeItems({ status: "approved" })
-      setAllItems(fetchedItems)
+      setAllItems(fetchedItems.data)
     } catch (error) {
       console.error("Failed to fetch knowledge items:", error)
       setAllItems([])

@@ -41,8 +41,8 @@ export default function RepositoryDetailPage() {
         setRepository(repoData);
 
         // Fetch knowledge items for this repository
-        const items = await fetchKnowledgeItems({ repositoryId: id });
-        setKnowledgeItems(items);
+        const response = await fetchKnowledgeItems({ repositoryId: id });
+        setKnowledgeItems(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load repository");
         console.error("Error fetching repository:", err);

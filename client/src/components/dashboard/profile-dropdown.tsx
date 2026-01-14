@@ -10,7 +10,6 @@ import {
   Moon,
   Sun,
   ChevronDown,
-  LayoutDashboard,
 } from "lucide-react";
 import { getRoleBadgeColor, getRoleDisplayName } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";

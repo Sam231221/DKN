@@ -4,7 +4,6 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import type { UserRole } from "@/lib/permissions";
-import { sidebarItems } from "@/lib/rbac";
 
 interface DashboardSidebarProps {
   user: any;

@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { KnowledgeItemCard } from "@/components/explore/knowledge-item-card"
@@ -21,7 +20,6 @@ interface TrendingItemWithScore extends KnowledgeItem {
 
 export default function TrendingPage() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [allItems, setAllItems] = useState<KnowledgeItem[]>([])
   const [trendingItems, setTrendingItems] = useState<TrendingItemWithScore[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,21 +89,6 @@ export default function TrendingPage() {
   // Calculate comprehensive trending score (includes access + other factors)
   const calculateTrendingScore = useCallback((item: KnowledgeItem, period: TimePeriod): number => {
     const accessScore = calculateAccessScore(item, period)
-    
-    // Additional trending factors
-    const now = new Date().getTime()
-    const itemDate = new Date(item.createdAt).getTime()
-    const itemUpdatedDate = new Date(item.updatedAt).getTime()
-    
-    const thresholds = {
-      today: 24 * 60 * 60 * 1000,
-      week: 7 * 24 * 60 * 60 * 1000,
-      month: 30 * 24 * 60 * 60 * 1000,
-      all: Infinity,
-    }
-
-    const threshold = thresholds[period]
-    const timeSinceUpdate = now - itemUpdatedDate
     
     // Validation boost (validated content is more trusted)
     const validationBoost = item.validatedBy ? 20 : 0

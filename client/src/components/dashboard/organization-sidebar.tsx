@@ -3,6 +3,12 @@ import { cn } from "@/lib/utils";
 import { useRegionalOffice } from "@/contexts/RegionalOfficeContext";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import type { UserRole } from "@/lib/permissions";
+import type { User } from "@/lib/api";
+
+interface OrganizationSidebarProps {
+  className?: string;
+  user?: User | null;
+}
 
 export function OrganizationSidebar({ className, user }: OrganizationSidebarProps) {
   const navigate = useNavigate();

@@ -19,10 +19,8 @@ import {
   Search,
   RefreshCw,
   XCircle,
-  TrendingUp,
   FileX,
   Sparkles,
-  BarChart3,
   Eye,
 } from "lucide-react";
 import {

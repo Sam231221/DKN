@@ -20,8 +20,6 @@ import {
   Users,
   BarChart3,
   Shield,
-  Award,
-  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/permissions";

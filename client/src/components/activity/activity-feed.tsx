@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +12,11 @@ import { formatDate, type ActivityFeedItem, type WorkspaceActivity } from "@/lib
 interface ActivityFeedProps {
   activities: (ActivityFeedItem | WorkspaceActivity)[];
   loading?: boolean;
+}
+
+// Type guard to check if activity is ActivityFeedItem
+function isActivityFeedItem(activity: ActivityFeedItem | WorkspaceActivity): activity is ActivityFeedItem {
+  return 'user' in activity;
 }
 
 export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
@@ -81,13 +85,13 @@ export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={activity.user?.avatar || activity.author?.avatar || undefined} />
+                  <AvatarImage src={(isActivityFeedItem(activity) ? activity.user?.avatar : activity.author?.avatar) ?? undefined} />
                   <AvatarFallback className="text-xs">
-                    {(activity.user?.name || activity.author?.name || "U").charAt(0).toUpperCase()}
+                    {(isActivityFeedItem(activity) ? activity.user?.name : activity.author?.name || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="font-medium text-sm">
-                  {activity.user?.name || activity.author?.name || "Unknown"}
+                  {isActivityFeedItem(activity) ? activity.user?.name : activity.author?.name || "Unknown"}
                 </span>
                 <Badge
                   variant="outline"
@@ -106,7 +110,7 @@ export function ActivityFeed({ activities, loading }: ActivityFeedProps) {
                 {activity.description}
               </p>
             )}
-            {activity.content && (
+            {'content' in activity && activity.content && (
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                 {activity.content}
               </p>
