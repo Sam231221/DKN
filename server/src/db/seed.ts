@@ -43,30 +43,30 @@ async function seed() {
         .returning();
     }
 
-    let employee1 = await db.select().from(users).where(eq(users.email, "employee@velion.com")).limit(1);
-    if (employee1.length === 0) {
-      [employee1[0]] = await db
+    let consultant1 = await db.select().from(users).where(eq(users.email, "consultant1@velion.com")).limit(1);
+    if (consultant1.length === 0) {
+      [consultant1[0]] = await db
         .insert(users)
         .values({
-          email: "employee@velion.com",
+          email: "consultant1@velion.com",
           password: hashedPassword,
           name: "Emma Wilson",
-          role: "employee",
+          role: "consultant",
           points: 1200,
           contributions: 56,
         })
         .returning();
     }
 
-    let employee2 = await db.select().from(users).where(eq(users.email, "john.doe@velion.com")).limit(1);
-    if (employee2.length === 0) {
-      [employee2[0]] = await db
+    let consultant2 = await db.select().from(users).where(eq(users.email, "john.doe@velion.com")).limit(1);
+    if (consultant2.length === 0) {
+      [consultant2[0]] = await db
         .insert(users)
         .values({
           email: "john.doe@velion.com",
           password: hashedPassword,
           name: "John Doe",
-          role: "employee",
+          role: "consultant",
           points: 850,
           contributions: 42,
         })
@@ -185,7 +185,7 @@ This document outlines the best practices for integrating third-party APIs in ou
 - [ ] Monitor usage metrics`,
         type: "procedure" as const,
         repositoryId: repo2[0].id,
-        authorId: employee1[0].id,
+        authorId: consultant1[0].id,
         status: "approved" as const,
         tags: ["Onboarding", "Client", "Process", "Checklist"],
         views: 521,
@@ -248,7 +248,7 @@ This document outlines the best practices for integrating third-party APIs in ou
 - Document component props and usage`,
         type: "documentation" as const,
         repositoryId: repo1[0].id,
-        authorId: employee2[0].id,
+        authorId: consultant2[0].id,
         status: "approved" as const,
         tags: ["React", "Components", "Frontend", "Guidelines"],
         views: 412,
@@ -280,7 +280,7 @@ This document outlines the best practices for integrating third-party APIs in ou
 - Test migrations on staging first`,
         type: "technical" as const,
         repositoryId: repo1[0].id,
-        authorId: employee1[0].id,
+        authorId: consultant1[0].id,
         status: "pending_review" as const,
         tags: ["Database", "Migration", "Backend", "DevOps"],
         views: 198,
@@ -345,7 +345,7 @@ This document outlines the best practices for integrating third-party APIs in ou
 4. Executive Team`,
         type: "best_practices" as const,
         repositoryId: repo2[0].id,
-        authorId: employee1[0].id,
+        authorId: consultant1[0].id,
         status: "approved" as const,
         tags: ["Communication", "Client", "Professional", "Guidelines"],
         views: 425,

@@ -83,7 +83,7 @@ const velionUsers = {
     {
       firstName: "Anna",
       lastName: "Christensen",
-      role: "employee" as const,
+      role: "consultant" as const,
       email: "anna.christensen@velion.com",
     },
     {
@@ -103,6 +103,18 @@ const velionUsers = {
       lastName: "Rasmussen",
       role: "consultant" as const,
       email: "noah.rasmussen@velion.com",
+    },
+    {
+      firstName: "Erik",
+      lastName: "Sørensen",
+      role: "executive_leadership" as const,
+      email: "erik.sorensen@velion.com",
+    },
+    {
+      firstName: "Maria",
+      lastName: "Olsen",
+      role: "knowledge_council_member" as const,
+      email: "maria.olsen@velion.com",
     },
   ],
   asia: [
@@ -151,7 +163,7 @@ const velionUsers = {
     {
       firstName: "Mei",
       lastName: "Zhang",
-      role: "employee" as const,
+      role: "consultant" as const,
       email: "mei.zhang@velion.com",
     },
     {
@@ -165,6 +177,18 @@ const velionUsers = {
       lastName: "Sato",
       role: "consultant" as const,
       email: "kenji.sato@velion.com",
+    },
+    {
+      firstName: "Hiroshi",
+      lastName: "Nakamura",
+      role: "executive_leadership" as const,
+      email: "hiroshi.nakamura@velion.com",
+    },
+    {
+      firstName: "Xiaoli",
+      lastName: "Wu",
+      role: "knowledge_council_member" as const,
+      email: "xiaoli.wu@velion.com",
     },
   ],
   northAmerica: [
@@ -213,7 +237,7 @@ const velionUsers = {
     {
       firstName: "Amanda",
       lastName: "Taylor",
-      role: "employee" as const,
+      role: "consultant" as const,
       email: "amanda.taylor@velion.com",
     },
     {
@@ -227,6 +251,18 @@ const velionUsers = {
       lastName: "Thomas",
       role: "consultant" as const,
       email: "michelle.thomas@velion.com",
+    },
+    {
+      firstName: "Robert",
+      lastName: "Thompson",
+      role: "executive_leadership" as const,
+      email: "robert.thompson@velion.com",
+    },
+    {
+      firstName: "Patricia",
+      lastName: "Garcia",
+      role: "knowledge_council_member" as const,
+      email: "patricia.garcia@velion.com",
     },
   ],
 };
@@ -379,14 +415,19 @@ function getDepartmentForUser(role: string, _regionName: string): string {
     return getRandomElement(["Engineering", "IT"]);
   }
 
+  // Executive Leadership typically in executive/leadership departments
+  if (role === "executive_leadership") {
+    return getRandomElement(["Engineering", "Consulting", "Product"]);
+  }
+
+  // Knowledge Council Members typically in Engineering or IT (similar to Knowledge Champions)
+  if (role === "knowledge_council_member") {
+    return getRandomElement(["Engineering", "IT"]);
+  }
+
   // Consultants typically in Consulting or Engineering
   if (role === "consultant") {
     return getRandomElement(["Consulting", "Engineering", "Product"]);
-  }
-
-  // Employees distributed across all departments
-  if (role === "employee") {
-    return getRandomElement(departments);
   }
 
   // Default to Consulting
@@ -629,12 +670,15 @@ async function seedOrganizational() {
         } else if (userInfo.role === "knowledge_champion") {
           points = getRandomInt(2000, 2500);
           contributions = getRandomInt(100, 150);
+        } else if (userInfo.role === "executive_leadership") {
+          points = getRandomInt(2200, 2800);
+          contributions = getRandomInt(120, 160);
+        } else if (userInfo.role === "knowledge_council_member") {
+          points = getRandomInt(1900, 2400);
+          contributions = getRandomInt(90, 140);
         } else if (userInfo.role === "consultant") {
           points = getRandomInt(1000, 2000);
           contributions = getRandomInt(50, 100);
-        } else if (userInfo.role === "employee") {
-          points = getRandomInt(500, 1000);
-          contributions = getRandomInt(20, 50);
         }
 
         // Get department based on role and region
@@ -683,9 +727,7 @@ async function seedOrganizational() {
     // ========================================================================
     console.log("\n🏢 Step 3: Creating external clients...");
 
-    // First, create client users (one per client company)
-    const clientUsers: (typeof users.$inferSelect)[] = [];
-
+    // Create client company records (not user accounts - these are external companies)
     for (let i = 0; i < clientNames.length; i++) {
       const clientName = clientNames[i];
       const industry = clientIndustries[i % clientIndustries.length];
@@ -693,68 +735,35 @@ async function seedOrganizational() {
       // Assign client to a region (distribute evenly)
       const clientRegion = [europeRegion, asiaRegion, naRegion][i % 3];
 
-      // Generate client user email and name
-      const clientEmail = `contact@${clientName
-        .toLowerCase()
-        .replace(/\s+/g, "")}.com`;
-      const clientUsername = clientName.toLowerCase().replace(/\s+/g, "-");
-
-      // Check if client user already exists
-      const existingClientUser = await db
+      // Check if client already exists
+      const existingClient = await db
         .select()
-        .from(users)
-        .where(eq(users.email, clientEmail))
+        .from(clients)
+        .where(eq(clients.name, clientName))
         .limit(1);
 
-      let clientUser;
-      if (existingClientUser.length > 0) {
-        clientUser = existingClientUser[0];
-        clientUsers.push(clientUser);
-        console.log(`  ✓ Client user "${clientEmail}" already exists`);
-      } else {
-        // Create a user with role "client" for this client company
-        const [newClientUser] = await db
-          .insert(users)
-          .values({
-            email: clientEmail,
-            password: hashedPassword,
-            username: clientUsername,
-            name: clientName,
-            firstName: clientName.split(" ")[0] || clientName,
-            lastName: clientName.split(" ").slice(1).join(" ") || "Client",
-            organizationType: "organizational",
-            organizationName: clientName,
-            role: "client",
-            regionId: clientRegion.id,
-            industry,
-            isActive: true,
-            emailVerified: true,
-            points: getRandomInt(0, 100),
-            contributions: 0,
-          })
-          .returning();
-
-        clientUser = newClientUser;
-        clientUsers.push(clientUser);
-        console.log(`  ✓ Created client user: ${clientEmail}`);
+      if (existingClient.length > 0) {
+        externalClients.push(existingClient[0]);
+        console.log(`  ✓ Client company "${clientName}" already exists`);
+        continue;
       }
 
-      // Now create the client record linked to the client user
+      // Create the client company record (no user account needed)
       const [client] = await db
         .insert(clients)
         .values({
           name: clientName,
           industry,
           regionId: clientRegion.id,
-          userId: clientUser.id, // Link to the client user, not a consultant
+          userId: null, // No user account for external client companies
         })
         .returning();
 
       externalClients.push(client);
+      console.log(`  ✓ Created client company: ${clientName}`);
     }
 
-    console.log(`  ✓ Created ${clientUsers.length} client users`);
-    console.log(`  ✓ Created ${externalClients.length} external clients`);
+    console.log(`  ✓ Created ${externalClients.length} external client companies`);
 
     // ========================================================================
     // STEP 4: Create Projects
@@ -1018,10 +1027,12 @@ async function seedOrganizational() {
           numComments = getRandomInt(60, 100);
         } else if (employee.role === "knowledge_champion") {
           numComments = getRandomInt(50, 90);
+        } else if (employee.role === "executive_leadership") {
+          numComments = getRandomInt(55, 95);
+        } else if (employee.role === "knowledge_council_member") {
+          numComments = getRandomInt(45, 85);
         } else if (employee.role === "consultant") {
           numComments = getRandomInt(30, 70);
-        } else if (employee.role === "employee") {
-          numComments = getRandomInt(10, 40);
         }
 
         // Create comment contributions

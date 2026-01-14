@@ -15,8 +15,6 @@ import { createId } from "@paralleldrive/cuid2";
 // ============================================================================
 
 export const userRoleEnum = pgEnum("user_role", [
-  "client",
-  "employee",
   "consultant",
   "knowledge_champion",
   "administrator",
@@ -110,7 +108,7 @@ export const users = pgTable("users", {
   address: text("address"),
   avatar: text("avatar"), // Image URL or path
   experienceLevel: text("experience_level"), // e.g., "aspiring_engineer", "entry_level", "mid_level", "experienced", "highly_experienced", "not_engineer"
-  role: userRoleEnum("role").notNull().default("client"),
+  role: userRoleEnum("role").notNull().default("consultant"),
   organizationType:
     organizationTypeEnum("organization_type").default("individual"),
   organizationName: text("organization_name"), // Organization name for organizational accounts
@@ -396,7 +394,7 @@ export const invitations = pgTable("invitations", {
   email: text("email").notNull(),
   token: text("token").notNull().unique(),
   organizationName: text("organization_name"), // Organization name for organizational invitations
-  role: userRoleEnum("role").default("employee"),
+  role: userRoleEnum("role").default("consultant"),
   invitedBy: text("invited_by")
     .references(() => users.id)
     .notNull(),

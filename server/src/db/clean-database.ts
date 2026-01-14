@@ -26,35 +26,49 @@ async function cleanDatabase() {
     console.log("⚠️  This will delete ALL data from the database!");
 
     // Delete in order to respect foreign key constraints
-    console.log("📝 Deleting knowledge items...");
-    await db.delete(knowledgeItems);
-    console.log("  ✓ Deleted knowledge items");
+    // Delete child tables first (those that reference other tables)
 
+    // Contributions references knowledgeItems and users
     console.log("📝 Deleting contributions...");
     await db.delete(contributions);
     console.log("  ✓ Deleted contributions");
 
+    // ConsultantProjects references projects and users (must be before projects)
+    console.log("📝 Deleting consultant projects...");
+    await db.delete(consultantProjects);
+    console.log("  ✓ Deleted consultant projects");
+
+    // KnowledgeItems references projects, repositories, and users
+    console.log("📝 Deleting knowledge items...");
+    await db.delete(knowledgeItems);
+    console.log("  ✓ Deleted knowledge items");
+
+    // Projects references clients and users
     console.log("📝 Deleting projects...");
     await db.delete(projects);
     console.log("  ✓ Deleted projects");
 
+    // Clients references users and regions
     console.log("📝 Deleting clients...");
     await db.delete(clients);
     console.log("  ✓ Deleted clients");
 
+    // Repositories references users
     console.log("📝 Deleting repositories...");
     await db.delete(repositories);
     console.log("  ✓ Deleted repositories");
 
-    console.log("📝 Deleting invitations...");
-    await db.delete(invitations);
-    console.log("  ✓ Deleted invitations");
-
+    // Notifications references users
     console.log("📝 Deleting notifications...");
     await db.delete(notifications);
     console.log("  ✓ Deleted notifications");
 
-    // Delete user-related junction tables first
+    // Invitations references users
+    console.log("📝 Deleting invitations...");
+    await db.delete(invitations);
+    console.log("  ✓ Deleted invitations");
+
+    // Delete user-related junction tables (all reference users)
     console.log("📝 Deleting user interests...");
     await db.delete(userInterests);
     console.log("  ✓ Deleted user interests");
@@ -62,10 +76,6 @@ async function cleanDatabase() {
     console.log("📝 Deleting consultant expertise...");
     await db.delete(consultantExpertise);
     console.log("  ✓ Deleted consultant expertise");
-
-    console.log("📝 Deleting consultant projects...");
-    await db.delete(consultantProjects);
-    console.log("  ✓ Deleted consultant projects");
 
     console.log("📝 Deleting governance council members...");
     await db.delete(governanceCouncilMembers);
