@@ -14,9 +14,11 @@ export function TestUsersModal() {
 
   // Select 3 users with distinct roles: administrator, knowledge_champion, and employee
   const testUsers = [
-    DUMMY_USERS.find(u => u.role === "administrator")!,
-    DUMMY_USERS.find(u => u.role === "knowledge_champion")!,
-    DUMMY_USERS.find(u => u.role === "employee")!,
+    DUMMY_USERS.find((u) => u.role === "administrator")!,
+    DUMMY_USERS.find((u) => u.role === "knowledge_champion")!,
+    DUMMY_USERS.find((u) => u.role === "employee")!,
+    DUMMY_USERS.find((u) => u.role === "consultant")!,
+    DUMMY_USERS.find((u) => u.role === "client")!,
   ];
 
   const copyToClipboard = (text: string, index: number) => {
@@ -61,7 +63,8 @@ export function TestUsersModal() {
 
       <div className="overflow-y-auto p-4 space-y-4">
         <p className="text-sm text-muted-foreground">
-          Use these credentials to test the application with different user roles:
+          Use these credentials to test the application with different user
+          roles:
         </p>
 
         {testUsers.map((user, index) => (
@@ -70,8 +73,11 @@ export function TestUsersModal() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardTitle className="text-base mb-2">{user.name}</CardTitle>
-                  <Badge 
-                    className={cn("text-xs", getRoleBadgeColor(user.role as UserRole))}
+                  <Badge
+                    className={cn(
+                      "text-xs",
+                      getRoleBadgeColor(user.role as UserRole)
+                    )}
                   >
                     {getRoleDisplayName(user.role as UserRole)}
                   </Badge>
@@ -102,7 +108,9 @@ export function TestUsersModal() {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground mb-1">Password</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Password
+                    </p>
                     <p className="text-sm font-mono bg-muted px-2 py-1 rounded">
                       {user.password}
                     </p>
@@ -110,7 +118,9 @@ export function TestUsersModal() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyToClipboard(user.password, index * 2 + 1)}
+                    onClick={() =>
+                      copyToClipboard(user.password, index * 2 + 1)
+                    }
                     className="h-8 w-8 p-0 shrink-0"
                   >
                     {copiedIndex === index * 2 + 1 ? (
