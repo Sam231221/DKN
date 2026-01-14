@@ -24,6 +24,7 @@ import {
   sendOrganizationNotification,
 } from "../services/notificationService.js";
 import { getUserOrganizationName } from "../utils/userHelpers.js";
+import { createActivityFeedEntry } from "./activity.controller.js";
 
 export const getKnowledgeItems = async (
   req: AuthRequest,
@@ -31,7 +32,12 @@ export const getKnowledgeItems = async (
   next: NextFunction
 ) => {
   try {
-    const { type, status, search, repositoryId, regionId } = req.query;
+    const { type, status, search, repositoryId, regionId, originatingProjectId, page, limit } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = page ? parseInt(page as string, 10) : 1;
+    const limitNum = limit ? parseInt(limit as string, 10) : 10;
+    const offset = (pageNum - 1) * limitNum;
 
     // Get user's organization name and region for filtering
     let userOrganizationName: string | null = null;
@@ -160,6 +166,10 @@ export const getKnowledgeItems = async (
       conditions.push(eq(knowledgeItems.repositoryId, repositoryId as string));
     }
 
+    if (originatingProjectId) {
+      conditions.push(eq(knowledgeItems.originatingProjectId, originatingProjectId as string));
+    }
+
     if (search) {
       conditions.push(
         or(
@@ -173,11 +183,37 @@ export const getKnowledgeItems = async (
       query = query.where(and(...conditions)) as any;
     }
 
-    const items = await query.orderBy(sql`${knowledgeItems.createdAt} DESC`);
+    // Get total count for pagination (count distinct knowledge items)
+    let countQuery = db
+      .select({ count: sql<number>`count(distinct ${knowledgeItems.id})::int`.as("count") })
+      .from(knowledgeItems)
+      .leftJoin(users, eq(knowledgeItems.authorId, users.id))
+      .leftJoin(repositories, eq(knowledgeItems.repositoryId, repositories.id));
+
+    if (conditions.length > 0) {
+      countQuery = countQuery.where(and(...conditions)) as any;
+    }
+
+    const [countResult] = await countQuery;
+    const total = countResult?.count || 0;
+
+    // Apply pagination and ordering
+    const items = await query
+      .orderBy(sql`${knowledgeItems.createdAt} DESC`)
+      .limit(limitNum)
+      .offset(offset);
 
     res.json({
       status: "success",
-      data: items,
+      data: {
+        data: items,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      },
     });
   } catch (error) {
     next(error);
@@ -389,6 +425,21 @@ export const createKnowledgeItem = async (
     } catch (error) {
       console.error("Error tracking contribution:", error);
       // Continue even if contribution tracking fails
+    }
+
+    // Create activity feed entry
+    try {
+      await createActivityFeedEntry(
+        req.user.id,
+        "knowledge_created",
+        title,
+        `Created knowledge item: ${title}`,
+        newItem.id,
+        "knowledge_item",
+        newItem.originatingProjectId || undefined
+      );
+    } catch (error) {
+      console.error("Error creating activity feed entry:", error);
     }
 
     // Send notifications (async, don't block)

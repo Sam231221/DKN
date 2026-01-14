@@ -190,7 +190,15 @@ export default function RepositoriesPage() {
                         <CardTitle className="text-base truncate">{repo.name}</CardTitle>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Add dropdown menu for repository actions (edit, delete, etc.)
+                      }}
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>

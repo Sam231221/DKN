@@ -10,9 +10,7 @@ import {
   Search,
   TrendingUp,
   Award,
-  BarChart3,
   Shield,
-  UserCog,
 } from "lucide-react";
 import type { UserRole, Permission } from "./permissions";
 
@@ -79,6 +77,14 @@ export const sidebarItems: SidebarItem[] = [
     description: "View and manage projects",
   },
   {
+    id: "workspaces",
+    label: "Workspaces",
+    path: "/dashboard/workspaces",
+    icon: Users,
+    roles: "all",
+    description: "Collaborative workspaces for team projects",
+  },
+  {
     id: "knowledge-items",
     label: "Knowledge Items",
     path: "/dashboard/knowledge-items",
@@ -127,20 +133,6 @@ export const sidebarItems: SidebarItem[] = [
     description: "Gamification leaderboard",
   },
   {
-    id: "analytics",
-    label: "Analytics",
-    path: "/dashboard/analytics",
-    icon: BarChart3,
-    roles: [
-      "knowledge_champion",
-      "administrator",
-      "executive_leadership",
-      "knowledge_council_member",
-    ],
-    requiresPermission: "canAccessAnalytics",
-    description: "System analytics and insights",
-  },
-  {
     id: "governance",
     label: "Governance",
     path: "/dashboard/governance",
@@ -151,15 +143,6 @@ export const sidebarItems: SidebarItem[] = [
       "knowledge_council_member",
     ],
     description: "Knowledge governance and curation",
-  },
-  {
-    id: "user-management",
-    label: "User Management",
-    path: "/dashboard/user-management",
-    icon: UserCog,
-    roles: ["administrator"],
-    requiresPermission: "canManageUsers",
-    description: "Manage system users and permissions",
   },
   {
     id: "settings",
@@ -277,6 +260,64 @@ export const contentAccess: Record<string, ContentAccess> = {
         "executive_leadership",
       ],
       manageProjects: ["administrator", "executive_leadership"],
+    },
+  },
+  workspaces: {
+    page: "workspaces",
+    canView: [
+      "consultant",
+      "knowledge_champion",
+      "administrator",
+      "executive_leadership",
+      "knowledge_council_member",
+    ],
+    canCreate: [
+      "consultant",
+      "knowledge_champion",
+      "administrator",
+      "executive_leadership",
+    ],
+    canEdit: [
+      "consultant",
+      "knowledge_champion",
+      "administrator",
+      "executive_leadership",
+    ],
+    canDelete: ["administrator"],
+    canManage: [
+      "consultant",
+      "knowledge_champion",
+      "administrator",
+      "executive_leadership",
+    ],
+    features: {
+      viewWorkspaces: [
+        "consultant",
+        "knowledge_champion",
+        "administrator",
+        "executive_leadership",
+        "knowledge_council_member",
+      ],
+      addWorkspaceMembers: [
+        "consultant",
+        "knowledge_champion",
+        "administrator",
+        "executive_leadership",
+      ],
+      removeWorkspaceMembers: [
+        "consultant",
+        "knowledge_champion",
+        "administrator",
+        "executive_leadership",
+      ],
+      viewWorkspaceActivity: [
+        "consultant",
+        "knowledge_champion",
+        "administrator",
+        "executive_leadership",
+        "knowledge_council_member",
+      ],
+      manageWorkspaceSettings: ["administrator", "executive_leadership"],
     },
   },
   "knowledge-items": {

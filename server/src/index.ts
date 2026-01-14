@@ -15,6 +15,10 @@ import { invitationRoutes } from "./routes/invitation.routes.js";
 import { clientRoutes } from "./routes/client.routes.js";
 import { projectRoutes } from "./routes/project.routes.js";
 import { regionRoutes } from "./routes/region.routes.js";
+import { searchRoutes } from "./routes/search.routes.js";
+import { commentRoutes } from "./routes/comment.routes.js";
+import { workspaceRoutes } from "./routes/workspace.routes.js";
+import { activityRoutes } from "./routes/activity.routes.js";
 
 // Load environment variables
 dotenv.config();
@@ -248,6 +252,16 @@ app.get("/", (_req, res) => {
           path: "/api/regions/offices/:id",
           description: "Get regional office by ID",
           authentication: true,
+        },
+      ],
+      search: [
+        {
+          method: "GET",
+          path: "/api/search",
+          description:
+            "Unified search across projects, knowledge items, and repositories",
+          authentication: true,
+          queryParams: ["q", "regionId"],
         },
       ],
     },
@@ -724,6 +738,10 @@ app.use("/api/invitations", invitationRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/regions", regionRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/workspaces", workspaceRoutes);
+app.use("/api/activity", activityRoutes);
 
 // Error handling
 app.use(notFoundHandler);

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
+import { GlobalActivityFeed } from "@/components/activity/global-activity-feed";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -496,6 +497,13 @@ export default function OrganizationDashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Activity Feed Section */}
+        {canAccessFeature("workspaces", "viewWorkspaceActivity") && (
+          <div className="mt-8">
+            <GlobalActivityFeed limit={20} />
+          </div>
+        )}
       </div>
     </OrganizationDashboardLayout>
   );

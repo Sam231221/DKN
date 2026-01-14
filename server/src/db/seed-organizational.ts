@@ -7,8 +7,9 @@ import {
   knowledgeItems,
   regions,
   contributions,
+  workspaceMembers,
 } from "./schema/index.js";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 
@@ -829,7 +830,159 @@ async function seedOrganizational() {
     console.log(`  ✓ Created ${allProjects.length} projects`);
 
     // ========================================================================
-    // STEP 5: Create Repositories
+    // STEP 5: Create Workspaces and Add Members
+    // ========================================================================
+    console.log("\n👥 Step 5: Creating workspaces and adding members...");
+
+    // Check if workspace_members table exists
+    let workspaceMembersTableExists = true;
+    try {
+      await db.select().from(workspaceMembers).limit(1);
+    } catch (error: any) {
+      if (
+        error?.cause?.code === "42P01" ||
+        error?.message?.includes("does not exist")
+      ) {
+        workspaceMembersTableExists = false;
+        console.warn(
+          "  ⚠️  workspace_members table does not exist. Skipping workspace members creation."
+        );
+        console.warn(
+          "  💡 To create workspace members, run migrations first: npm run db:migrate"
+        );
+      }
+    }
+
+    let workspaceMemberCount = 0;
+
+    for (const project of allProjects) {
+      // Get the lead consultant (project owner)
+      const leadConsultant = velionEmployees.find(
+        (u) => u.id === project.leadConsultantId
+      );
+
+      if (!leadConsultant) {
+        console.log(
+          `  ⚠️  Skipping workspace for project ${project.name} - lead consultant not found`
+        );
+        continue;
+      }
+
+      // Add lead consultant as workspace owner
+      if (workspaceMembersTableExists) {
+        try {
+          const existingOwner = await db
+            .select()
+            .from(workspaceMembers)
+            .where(
+              and(
+                eq(workspaceMembers.projectId, project.id),
+                eq(workspaceMembers.userId, leadConsultant.id)
+              )
+            )
+            .limit(1);
+
+          if (existingOwner.length === 0) {
+            await db.insert(workspaceMembers).values({
+              projectId: project.id,
+              userId: leadConsultant.id,
+              role: "owner",
+              joinedAt: project.createdAt
+                ? new Date(project.createdAt)
+                : new Date(),
+            });
+            workspaceMemberCount++;
+          }
+        } catch (error: any) {
+          console.error(
+            `  ⚠️  Error adding owner to workspace for project ${project.name}:`,
+            error
+          );
+        }
+      }
+
+      // Get the client's region to find team members from the same region
+      const projectClient = externalClients.find(
+        (c) => c.id === project.clientId
+      );
+      const projectRegionId =
+        projectClient?.regionId || leadConsultant.regionId;
+
+      // Get available team members (consultants and knowledge champions from same region)
+      const availableTeamMembers = velionEmployees.filter(
+        (u) =>
+          u.id !== leadConsultant.id && // Exclude the lead consultant (already added)
+          (u.regionId === projectRegionId || // Same region
+            Math.random() > 0.7) && // 30% chance to include cross-regional members
+          (u.role === "consultant" ||
+            u.role === "knowledge_champion" ||
+            u.role === "administrator")
+      );
+
+      // Add 2-5 team members to each workspace
+      if (workspaceMembersTableExists) {
+        const numMembers = getRandomInt(2, 5);
+        const selectedMembers = availableTeamMembers
+          .sort(() => Math.random() - 0.5) // Shuffle
+          .slice(0, Math.min(numMembers, availableTeamMembers.length));
+
+        for (const member of selectedMembers) {
+          try {
+            // Check if member already exists
+            const existingMember = await db
+              .select()
+              .from(workspaceMembers)
+              .where(
+                and(
+                  eq(workspaceMembers.projectId, project.id),
+                  eq(workspaceMembers.userId, member.id)
+                )
+              )
+              .limit(1);
+
+            if (existingMember.length > 0) {
+              continue;
+            }
+
+            // Assign role based on member's organizational role
+            let workspaceRole = "member";
+            if (
+              member.role === "knowledge_champion" ||
+              member.role === "administrator"
+            ) {
+              workspaceRole = getRandomElement(["admin", "member"]);
+            } else if (member.role === "consultant") {
+              workspaceRole = getRandomElement(["member", "viewer"]);
+            }
+
+            await db.insert(workspaceMembers).values({
+              projectId: project.id,
+              userId: member.id,
+              role: workspaceRole,
+              joinedAt: getRandomDate(
+                project.createdAt
+                  ? new Date(project.createdAt)
+                  : new Date(2023, 0, 1),
+                new Date()
+              ),
+            });
+            workspaceMemberCount++;
+          } catch (error: any) {
+            console.error(
+              `  ⚠️  Error adding member ${member.name} to workspace for project ${project.name}:`,
+              error
+            );
+          }
+        }
+      }
+    }
+
+    console.log(
+      `  ✓ Created workspaces and added ${workspaceMemberCount} workspace members`
+    );
+
+    // ========================================================================
+    // STEP 6: Create Repositories
     // ========================================================================
     console.log("\n📚 Step 5: Creating repositories...");
 
@@ -925,7 +1078,7 @@ async function seedOrganizational() {
     console.log(`  ✓ Created ${allRepositories.length} repositories`);
 
     // ========================================================================
-    // STEP 6: Create Knowledge Items
+    // STEP 7: Create Knowledge Items
     // ========================================================================
     console.log("\n📝 Step 6: Creating knowledge items...");
 
@@ -1006,7 +1159,7 @@ async function seedOrganizational() {
     console.log(`  ✓ Created ${knowledgeItemCount} knowledge items`);
 
     // ========================================================================
-    // STEP 7: Create Comment Contributions
+    // STEP 8: Create Comment Contributions
     // ========================================================================
     console.log("\n💬 Step 7: Creating comment contributions...");
 
@@ -1057,7 +1210,7 @@ async function seedOrganizational() {
     console.log(`  ✓ Created ${commentCount} comment contributions`);
 
     // ========================================================================
-    // STEP 8: Update Repository Counts
+    // STEP 9: Update Repository Counts
     // ========================================================================
     console.log("\n📊 Step 8: Updating repository counts...");
 
@@ -1119,6 +1272,8 @@ async function seedOrganizational() {
     console.log(`   - Velion Employees: ${velionEmployees.length}`);
     console.log(`   - External Clients: ${externalClients.length}`);
     console.log(`   - Projects: ${allProjects.length}`);
+    console.log(`   - Workspaces: ${allProjects.length} (one per project)`);
+    console.log(`   - Workspace Members: ${workspaceMemberCount}`);
     console.log(`   - Repositories: ${allRepositories.length}`);
     console.log(`   - Knowledge Items: ${knowledgeItemCount}`);
     console.log("\n🎉 Database seeded with realistic Velion Dynamics data!");

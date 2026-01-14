@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout"
-import { AISearchBar } from "@/components/search/ai-search-bar"
+import { UnifiedSearchDropdown } from "@/components/search/unified-search-dropdown"
 import { SearchResults } from "@/components/search/search-results"
 import { SearchFilters } from "@/components/search/search-filters"
 import { RecommendedTopics } from "@/components/search/recommended-topics"
@@ -10,12 +11,23 @@ import { Sparkles } from "lucide-react"
 
 export default function OrganizationSearchPage() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [hasSearched, setHasSearched] = useState(false)
+
+  // Get query from URL params on mount
+  useEffect(() => {
+    const queryParam = searchParams.get("q")
+    if (queryParam) {
+      setSearchQuery(queryParam)
+      setHasSearched(true)
+    }
+  }, [searchParams])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setHasSearched(true)
+    setSearchParams({ q: query })
   }
 
   if (!user) return null
@@ -33,7 +45,12 @@ export default function OrganizationSearchPage() {
           </p>
         </div>
 
-        <AISearchBar onSearch={handleSearch} />
+        <div className="max-w-2xl">
+          <UnifiedSearchDropdown
+            onSearch={handleSearch}
+            className="w-full"
+          />
+        </div>
 
         {!hasSearched ? (
           <div className="space-y-6">

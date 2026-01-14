@@ -29,11 +29,15 @@ import KnowledgeItemDetailPage from "@/pages/organization-dashboard/knowledge-it
 import RepositoriesPage from "@/pages/organization-dashboard/repositories/page";
 import RepositoryDetailPage from "@/pages/organization-dashboard/repositories/detail/page";
 import ProjectsPage from "@/pages/organization-dashboard/projects/page";
+import ProjectDetailPage from "@/pages/organization-dashboard/projects/[id]/page";
 import OrganizationSettingsPage from "@/pages/organization-dashboard/settings/page";
 import OrganizationSearchPage from "@/pages/organization-dashboard/search/page";
 import OrganizationTrendingPage from "@/pages/organization-dashboard/trending/page";
 import OrganizationLeaderboardPage from "@/pages/organization-dashboard/leaderboard/page";
 import OrganizationContributorsPage from "@/pages/organization-dashboard/contributors/page";
+import GovernancePage from "@/pages/organization-dashboard/governance/page";
+import WorkspacesPage from "@/pages/dashboard/workspaces/page";
+import WorkspaceDetailPage from "@/pages/dashboard/workspaces/[projectId]/page";
 import { Loader2 } from "lucide-react";
 import { TestUsersModal } from "@/components/test-users-modal";
 
@@ -178,6 +182,14 @@ export default function App() {
             } 
           />
           <Route 
+            path="/dashboard/projects/:id" 
+            element={
+              <ProtectedRoute requiredOrganizationType="organizational">
+                <ProjectDetailPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/dashboard/knowledge-items" 
             element={
               <ProtectedRoute requiredOrganizationType="organizational">
@@ -246,6 +258,30 @@ export default function App() {
             element={
               <ProtectedRoute requiredOrganizationType="organizational">
                 <OrganizationSettingsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/governance" 
+            element={
+              <ProtectedRoute requiredOrganizationType="organizational">
+                <GovernancePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/workspaces" 
+            element={
+              <ProtectedRoute requiredOrganizationType="organizational">
+                <WorkspacesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/workspaces/:projectId" 
+            element={
+              <ProtectedRoute requiredOrganizationType="organizational">
+                <WorkspaceDetailPage />
               </ProtectedRoute>
             } 
           />

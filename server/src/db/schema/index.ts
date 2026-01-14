@@ -379,10 +379,65 @@ export const notifications = pgTable("notifications", {
   userId: text("user_id")
     .references(() => users.id)
     .notNull(),
-  type: text("type").notNull(), // e.g., "upload", "review", "approval", "rejection", "organization"
+  type: text("type").notNull(), // e.g., "upload", "review", "approval", "rejection", "organization", "comment"
   message: text("message").notNull(),
   relatedId: text("related_id"), // ID of related knowledge item, etc.
   read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Comments - For collaboration and discussions on knowledge items
+export const comments = pgTable("comments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  knowledgeItemId: text("knowledge_item_id")
+    .references(() => knowledgeItems.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  content: text("content").notNull(),
+  parentCommentId: text("parent_comment_id").references(() => comments.id, {
+    onDelete: "cascade",
+  }), // For threaded replies
+  isEdited: boolean("is_edited").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Activity Feed - For tracking collaboration activities and updates
+export const activityFeed = pgTable("activity_feed", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  type: text("type").notNull(), // e.g., "knowledge_created", "knowledge_updated", "comment_added", "project_shared"
+  title: text("title").notNull(),
+  description: text("description"),
+  relatedId: text("related_id"), // ID of related knowledge item, project, etc.
+  relatedType: text("related_type"), // e.g., "knowledge_item", "project", "comment"
+  projectId: text("project_id").references(() => projects.id), // For project-based activities
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Collaborative Workspaces - Project-based workspaces for team collaboration
+// This extends the existing projects table with workspace features
+// We'll add a junction table for workspace members
+export const workspaceMembers = pgTable("workspace_members", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  projectId: text("project_id")
+    .references(() => projects.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  role: text("role").default("member"), // e.g., "owner", "admin", "member", "viewer"
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -626,3 +681,12 @@ export type NewNotification = typeof notifications.$inferInsert;
 
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
+
+export type ActivityFeed = typeof activityFeed.$inferSelect;
+export type NewActivityFeed = typeof activityFeed.$inferInsert;
+
+export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+export type NewWorkspaceMember = typeof workspaceMembers.$inferInsert;

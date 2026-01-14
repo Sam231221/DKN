@@ -4,6 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   FileText,
   Loader2,
   AlertCircle,
@@ -25,6 +34,7 @@ interface KnowledgeListProps {
   status?: string;
   search?: string;
   repositoryId?: string;
+  onView?: (item: KnowledgeItem) => void;
   onEdit?: (item: KnowledgeItem) => void;
   onDelete?: (item: KnowledgeItem) => void;
   user?: {
@@ -38,6 +48,7 @@ export function KnowledgeList({
   status,
   search,
   repositoryId,
+  onView,
   onEdit,
   onDelete,
   user,
@@ -46,6 +57,10 @@ export function KnowledgeList({
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const itemsPerPage = 10;
   const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
 
   useEffect(() => {
@@ -59,17 +74,23 @@ export function KnowledgeList({
           search?: string; 
           repositoryId?: string;
           regionId?: string | "all";
+          page?: number;
+          limit?: number;
         } = {};
         if (type) params.type = type;
         if (status) params.status = status;
         if (search && search.trim()) params.search = search.trim();
         if (repositoryId) params.repositoryId = repositoryId;
+        params.page = currentPage;
+        params.limit = itemsPerPage;
         // Add region filtering
         if (selectedOffice) {
           params.regionId = isGlobalView ? "all" : selectedOffice.id;
         }
-        const data = await fetchKnowledgeItems(params);
-        setItems(data);
+        const response = await fetchKnowledgeItems(params);
+        setItems(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotal(response.pagination.total);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load knowledge items"
@@ -81,6 +102,11 @@ export function KnowledgeList({
     };
 
     loadItems();
+  }, [type, status, search, repositoryId, selectedOffice, isGlobalView, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
   }, [type, status, search, repositoryId, selectedOffice, isGlobalView]);
 
   if (loading) {
@@ -153,7 +179,12 @@ export function KnowledgeList({
   };
 
   const handleView = (item: KnowledgeItem) => {
-    navigate(`/dashboard/knowledge-items/${item.id}`);
+    if (onView) {
+      onView(item);
+    } else {
+      // Fallback to navigation if no onView handler
+      navigate(`/dashboard/knowledge-items/${item.id}`);
+    }
   };
 
   const handleEdit = (item: KnowledgeItem) => {
@@ -166,6 +197,42 @@ export function KnowledgeList({
     if (onDelete) {
       onDelete(item);
     }
+  };
+
+  const generatePageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      // Show all pages if total pages is less than max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push("ellipsis");
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push("ellipsis");
+      }
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    
+    return pages;
   };
 
   return (
@@ -287,6 +354,49 @@ export function KnowledgeList({
           </div>
         </Card>
       ))}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {items.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
+            {Math.min(currentPage * itemsPerPage, total)} of {total} items
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {generatePageNumbers().map((page, index) => (
+                <PaginationItem key={index}>
+                  {page === "ellipsis" ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

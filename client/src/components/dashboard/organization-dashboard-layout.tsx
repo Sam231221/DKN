@@ -3,9 +3,9 @@ import { ProfileDropdown } from "./profile-dropdown";
 import { TeamsDropdown } from "./teams-dropdown";
 import { OrganizationSidebar } from "./organization-sidebar";
 import { RegionalOfficeProvider } from "@/contexts/RegionalOfficeContext";
-import { Search, Bell, Book, HelpCircle } from "lucide-react";
+import { UnifiedSearchDropdown } from "@/components/search/unified-search-dropdown";
+import { Bell, Book, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface OrganizationDashboardLayoutProps {
   children: ReactNode;
@@ -29,16 +29,8 @@ export function OrganizationDashboardLayout({
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="relative hidden lg:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Find..."
-                className="w-64 pl-9 h-9 text-sm"
-              />
-              <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                <span className="text-xs">F</span>
-              </kbd>
+            <div className="hidden lg:block">
+              <UnifiedSearchDropdown />
             </div>
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <HelpCircle className="h-5 w-5" />

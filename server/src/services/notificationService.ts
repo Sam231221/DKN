@@ -9,7 +9,10 @@ export type NotificationType =
   | "rejection"
   | "comment"
   | "update"
-  | "organization";
+  | "organization"
+  | "workspace_member_added"
+  | "workspace_activity"
+  | "knowledge_shared";
 
 /**
  * Send upload notification to the contributor
@@ -135,6 +138,33 @@ export async function sendOrganizationNotification(
 }
 
 /**
+ * Send comment notification to knowledge item author
+ */
+export async function sendCommentNotification(
+  userId: string,
+  knowledgeItemId: string,
+  title: string,
+  commenterId: string
+): Promise<void> {
+  // Get commenter's name
+  const [commenter] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, commenterId))
+    .limit(1);
+
+  const commenterName = commenter?.name || "Someone";
+
+  await db.insert(notifications).values({
+    userId,
+    type: "comment",
+    message: `${commenterName} commented on your knowledge item "${title}".`,
+    relatedId: knowledgeItemId,
+    read: false,
+  });
+}
+
+/**
  * Get notifications for a user
  */
 export async function getUserNotifications(userId: string): Promise<any[]> {
@@ -172,3 +202,63 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     .where(eq(notifications.userId, userId));
 }
 
+/**
+ * Send workspace member added notification
+ */
+export async function sendWorkspaceMemberNotification(
+  userId: string,
+  projectId: string,
+  projectName: string,
+  addedByName: string
+): Promise<void> {
+  await db.insert(notifications).values({
+    userId,
+    type: "workspace_member_added",
+    message: `${addedByName} added you to workspace "${projectName}".`,
+    relatedId: projectId,
+    read: false,
+  });
+}
+
+/**
+ * Send workspace activity notification to all members
+ */
+export async function sendWorkspaceActivityNotification(
+  projectId: string,
+  activityType: string,
+  activityTitle: string,
+  activityDescription: string,
+  userId: string
+): Promise<void> {
+  // Get all workspace members
+  const { workspaceMembers } = await import("../db/schema/index.js");
+  const members = await db
+    .select({ userId: workspaceMembers.userId })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.projectId, projectId));
+
+  // Get project name
+  const { projects } = await import("../db/schema/index.js");
+  const [project] = await db
+    .select({ name: projects.name })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (!project) return;
+
+  // Send notification to all members except the one who created the activity
+  const notificationRecords = members
+    .filter((m) => m.userId !== userId)
+    .map((m) => ({
+      userId: m.userId,
+      type: "workspace_activity" as NotificationType,
+      message: `${activityDescription} in workspace "${project.name}".`,
+      relatedId: projectId,
+      read: false,
+    }));
+
+  if (notificationRecords.length > 0) {
+    await db.insert(notifications).values(notificationRecords);
+  }
+}

@@ -8,6 +8,7 @@ import { Plus } from "lucide-react"
 import { CreateKnowledgeDialog } from "@/components/knowledge/create-knowledge-dialog"
 import { EditKnowledgeDialog } from "@/components/knowledge/edit-knowledge-dialog"
 import { DeleteKnowledgeDialog } from "@/components/knowledge/delete-knowledge-dialog"
+import { KnowledgeItemDetailDialog } from "@/components/knowledge/knowledge-item-detail-dialog"
 import type { KnowledgeItem } from "@/lib/api"
 
 export default function KnowledgePage() {
@@ -15,6 +16,7 @@ export default function KnowledgePage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [typeFilter, setTypeFilter] = useState<string | undefined>()
@@ -22,6 +24,11 @@ export default function KnowledgePage() {
 
   const handleRefresh = useCallback(() => {
     setRefreshKey((prev) => prev + 1)
+  }, [])
+
+  const handleView = useCallback((item: KnowledgeItem) => {
+    setSelectedItem(item)
+    setShowDetailDialog(true)
   }, [])
 
   const handleEdit = useCallback((item: KnowledgeItem) => {
@@ -77,6 +84,7 @@ export default function KnowledgePage() {
           type={typeFilter}
           search={searchQuery}
           user={user}
+          onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
@@ -97,6 +105,13 @@ export default function KnowledgePage() {
           onOpenChange={setShowDeleteDialog}
           itemId={selectedItem?.id || null}
           onSuccess={handleDeleteSuccess}
+        />
+        <KnowledgeItemDetailDialog
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+          knowledgeItemId={selectedItem?.id || ""}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </div>
     </DashboardLayout>

@@ -15,33 +15,33 @@ export interface DummyUser {
 
 export const DUMMY_USERS: DummyUser[] = [
   {
-    email: "sarah.johnson@velion.com",
-    password: "password123",
-    name: "Sarah Johnson",
-    role: "administrator",
-  },
-  {
-    email: "wei.chen@velion.com",
-    password: "password123",
-    name: "Wei Chen",
-    role: "knowledge_champion",
-  },
-  {
-    email: "anjali.patel@velion.com",
-    password: "password123",
-    name: "Anjali Patel",
-    role: "consultant",
-  },
-  {
     email: "david.martinez@velion.com",
     password: "password123",
     name: "David Martinez",
+    role: "administrator",
+  },
+  {
+    email: "xiaoli.wu@velion.com",
+    password: "password123",
+    name: "Xiaoli Wu",
+    role: "knowledge_champion",
+  },
+  {
+    email: "oliver.jensen@velion.com",
+    password: "password123",
+    name: "Oliver Jensen",
+    role: "consultant",
+  },
+  {
+    email: "robert.thompson@velion.com",
+    password: "password123",
+    name: "Robert Thompson",
     role: "executive_leadership",
   },
   {
-    email: "sophie.nielsen@velion.com",
+    email: "patricia.garcia@velion.com",
     password: "password123",
-    name: "Sophie Nielsen",
+    name: "Patricia Garcia",
     role: "knowledge_council_member",
   },
 ];

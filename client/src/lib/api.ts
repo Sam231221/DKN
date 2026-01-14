@@ -139,13 +139,35 @@ export interface KnowledgeItem {
   };
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export async function fetchKnowledgeItemById(id: string): Promise<KnowledgeItem> {
+  const endpoint = `/knowledge/${id}`;
+  const result = await apiRequest<KnowledgeItem>(endpoint);
+  if (!result.data) {
+    throw new Error("Knowledge item not found");
+  }
+  return result.data;
+}
+
 export async function fetchKnowledgeItems(params?: {
   type?: string;
   status?: string;
   search?: string;
   repositoryId?: string;
   regionId?: string | "all";
-}): Promise<KnowledgeItem[]> {
+  originatingProjectId?: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<KnowledgeItem>> {
   const queryParams = new URLSearchParams();
   if (params?.type) queryParams.append("type", params.type);
   if (params?.status) queryParams.append("status", params.status);
@@ -153,23 +175,17 @@ export async function fetchKnowledgeItems(params?: {
   if (params?.repositoryId)
     queryParams.append("repositoryId", params.repositoryId);
   if (params?.regionId) queryParams.append("regionId", params.regionId);
+  if (params?.originatingProjectId)
+    queryParams.append("originatingProjectId", params.originatingProjectId);
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
 
   const endpoint = `/knowledge${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const result = await apiRequest<KnowledgeItem[]>(endpoint);
-  return result.data || [];
-}
-
-export async function fetchKnowledgeItemById(
-  id: string
-): Promise<KnowledgeItem> {
-  const result = await apiRequest<KnowledgeItem>(`/knowledge/${id}`);
-  if (!result.data) {
-    throw new Error("Knowledge item not found");
-  }
-  return result.data;
+  const result = await apiRequest<PaginatedResponse<KnowledgeItem>>(endpoint);
+  return result.data || { data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
 }
 
 export function getTypeDisplayName(type: string): string {
@@ -455,6 +471,44 @@ export async function fetchProjects(params?: {
   return result.data || [];
 }
 
+export async function fetchProjectById(id: string): Promise<Project> {
+  const result = await apiRequest<Project>(`/projects/${id}`);
+  if (!result.data) {
+    throw new Error("Project not found");
+  }
+  return result.data;
+}
+
+// Unified Search API
+export interface SearchResult {
+  type: "project" | "knowledge" | "repository";
+  id: string;
+  title: string;
+  subtitle: string;
+  url: string;
+}
+
+export interface UnifiedSearchResponse {
+  projects: SearchResult[];
+  knowledgeItems: SearchResult[];
+  repositories: SearchResult[];
+}
+
+export async function fetchUnifiedSearch(
+  query: string,
+  regionId?: string | "all"
+): Promise<UnifiedSearchResponse> {
+  const queryParams = new URLSearchParams();
+  queryParams.append("q", query);
+  if (regionId) {
+    queryParams.append("regionId", regionId);
+  }
+
+  const endpoint = `/search?${queryParams.toString()}`;
+  const result = await apiRequest<UnifiedSearchResponse>(endpoint);
+  return result.data || { projects: [], knowledgeItems: [], repositories: [] };
+}
+
 // Clients API
 export interface Client {
   id: string;
@@ -554,6 +608,221 @@ export async function fetchContributors(params?: {
   }`;
 
   const result = await apiRequest<Contributor[]>(endpoint);
+  return result.data || [];
+}
+
+// Comments API
+export interface Comment {
+  id: string;
+  content: string;
+  parentCommentId?: string | null;
+  isEdited: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role: string;
+  };
+}
+
+export async function fetchComments(knowledgeItemId: string): Promise<Comment[]> {
+  const endpoint = `/comments/knowledge-item/${knowledgeItemId}`;
+  const result = await apiRequest<Comment[]>(endpoint);
+  return result.data || [];
+}
+
+export interface CreateCommentData {
+  content: string;
+  parentCommentId?: string;
+}
+
+export async function createComment(
+  knowledgeItemId: string,
+  data: CreateCommentData
+): Promise<Comment> {
+  const endpoint = `/comments/knowledge-item/${knowledgeItemId}`;
+  const result = await apiRequest<Comment>(endpoint, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!result.data) {
+    throw new Error("Failed to create comment");
+  }
+  return result.data;
+}
+
+export interface UpdateCommentData {
+  content: string;
+}
+
+export async function updateComment(
+  commentId: string,
+  data: UpdateCommentData
+): Promise<Comment> {
+  const endpoint = `/comments/${commentId}`;
+  const result = await apiRequest<Comment>(endpoint, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  if (!result.data) {
+    throw new Error("Failed to update comment");
+  }
+  return result.data;
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  const endpoint = `/comments/${commentId}`;
+  await apiRequest<void>(endpoint, {
+    method: "DELETE",
+  });
+}
+
+// Workspaces API
+export interface Workspace {
+  id: string;
+  projectCode?: string | null;
+  name: string;
+  clientId: string;
+  domain?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  status: string;
+  leadConsultantId?: string | null;
+  userRole?: string;
+  joinedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  role: string;
+  joinedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role: string;
+  };
+}
+
+export interface WorkspaceActivity {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  content?: string;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatar?: string | null;
+  };
+  knowledgeItemId?: string;
+}
+
+export async function fetchUserWorkspaces(): Promise<Workspace[]> {
+  const endpoint = `/workspaces`;
+  const result = await apiRequest<Workspace[]>(endpoint);
+  return result.data || [];
+}
+
+export async function fetchWorkspaceMembers(
+  projectId: string
+): Promise<WorkspaceMember[]> {
+  const endpoint = `/workspaces/${projectId}/members`;
+  const result = await apiRequest<WorkspaceMember[]>(endpoint);
+  return result.data || [];
+}
+
+export interface AddWorkspaceMemberData {
+  userId: string;
+  role?: string;
+}
+
+export async function addWorkspaceMember(
+  projectId: string,
+  data: AddWorkspaceMemberData
+): Promise<WorkspaceMember> {
+  const endpoint = `/workspaces/${projectId}/members`;
+  const result = await apiRequest<WorkspaceMember>(endpoint, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!result.data) {
+    throw new Error("Failed to add workspace member");
+  }
+  return result.data;
+}
+
+export async function removeWorkspaceMember(
+  projectId: string,
+  memberId: string
+): Promise<void> {
+  const endpoint = `/workspaces/${projectId}/members/${memberId}`;
+  await apiRequest<void>(endpoint, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchWorkspaceActivity(
+  projectId: string,
+  limit?: number
+): Promise<WorkspaceActivity[]> {
+  const queryParams = new URLSearchParams();
+  if (limit) queryParams.append("limit", limit.toString());
+  const endpoint = `/workspaces/${projectId}/activity${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+  const result = await apiRequest<WorkspaceActivity[]>(endpoint);
+  return result.data || [];
+}
+
+// Activity Feed API
+export interface ActivityFeedItem {
+  id: string;
+  type: string;
+  title: string;
+  description?: string | null;
+  relatedId?: string | null;
+  relatedType?: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role: string;
+  };
+}
+
+export async function fetchActivityFeed(params?: {
+  limit?: number;
+  projectId?: string;
+}): Promise<ActivityFeedItem[]> {
+  const queryParams = new URLSearchParams();
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.projectId) queryParams.append("projectId", params.projectId);
+  const endpoint = `/activity${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+  const result = await apiRequest<ActivityFeedItem[]>(endpoint);
+  return result.data || [];
+}
+
+export async function fetchUserActivityFeed(
+  limit?: number
+): Promise<ActivityFeedItem[]> {
+  const queryParams = new URLSearchParams();
+  if (limit) queryParams.append("limit", limit.toString());
+  const endpoint = `/activity/user${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+  const result = await apiRequest<ActivityFeedItem[]>(endpoint);
   return result.data || [];
 }
 

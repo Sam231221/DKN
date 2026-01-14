@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRegionalOfficeSafe } from "@/contexts/RegionalOfficeContext";
 import { OrganizationDashboardLayout } from "@/components/dashboard/organization-dashboard-layout";
@@ -39,6 +40,8 @@ import {
   TrendingUp,
   MoreVertical,
   Loader2,
+  Eye,
+  Edit,
 } from "lucide-react";
 import { fetchProjects, type Project as ProjectType } from "@/lib/api";
 
@@ -82,12 +85,14 @@ const ITEMS_PER_PAGE = 5;
 
 export default function ProjectsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { selectedOffice, isGlobalView } = useRegionalOfficeSafe();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -195,6 +200,36 @@ export default function ProjectsPage() {
 
   const activeProjects = projects.filter((p) => p.status === "active").length;
   const completedProjects = projects.filter((p) => p.status === "completed").length;
+
+  // Handle click outside to close menu
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (openMenuId) {
+        const target = event.target as HTMLElement;
+        if (!target.closest(`[data-menu-id="${openMenuId}"]`)) {
+          setOpenMenuId(null);
+        }
+      }
+    }
+
+    if (openMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
+
+  const handleViewProject = (projectId: string) => {
+    navigate(`/dashboard/projects/${projectId}`);
+    setOpenMenuId(null);
+  };
+
+  const handleEditProject = (projectId: string) => {
+    navigate(`/dashboard/projects/${projectId}/edit`);
+    setOpenMenuId(null);
+  };
 
   return (
     <OrganizationDashboardLayout user={user}>
@@ -334,7 +369,11 @@ export default function ProjectsPage() {
                   </TableRow>
                 ) : (
                   paginatedProjects.map((project) => (
-                    <TableRow key={project.id}>
+                    <TableRow 
+                      key={project.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => handleViewProject(project.id)}
+                    >
                       <TableCell className="font-mono text-xs">
                         {project.projectCode || "—"}
                       </TableCell>
@@ -388,10 +427,43 @@ export default function ProjectsPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative" data-menu-id={project.id}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === project.id ? null : project.id);
+                            }}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                          {openMenuId === project.id && (
+                            <div className="absolute right-0 top-full mt-1 w-40 rounded-md border border-border bg-background shadow-lg z-50">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewProject(project.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                              >
+                                <Eye className="h-4 w-4" />
+                                View
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditProject(project.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
