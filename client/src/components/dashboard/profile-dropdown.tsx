@@ -36,7 +36,10 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -65,7 +68,8 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  const userInitial = user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || "U";
+  const userInitial =
+    user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || "U";
   const userRole = user.role || "client";
 
   return (
@@ -75,9 +79,16 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
         className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors"
       >
         <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-primary">{userInitial}</span>
+          <span className="text-sm font-semibold text-primary">
+            {userInitial}
+          </span>
         </div>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
       </button>
 
       {isOpen && (
@@ -86,11 +97,17 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
           <div className="p-4 border-b border-border">
             <div className="flex items-start gap-3">
               <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-lg font-semibold text-primary">{userInitial}</span>
+                <span className="text-lg font-semibold text-primary">
+                  {userInitial}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{user.name || "User"}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="font-semibold text-sm truncate">
+                  {user.name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
                 <div className="mt-2">
                   <Badge className={cn("text-xs", getRoleBadgeColor(userRole))}>
                     {getRoleDisplayName(userRole)}
@@ -100,34 +117,8 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
             </div>
           </div>
 
-          {/* Profile Completion */}
-          <div className="p-4 border-b border-border bg-muted/30">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Profile Completion</span>
-              <span className="text-xs text-muted-foreground">60%</span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: "60%" }} />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Add headline, work experience and education to complete your profile.
-            </p>
-          </div>
-
           {/* Menu Items */}
           <div className="p-2">
-            {user.organizationType === "organizational" && (
-              <button
-                onClick={() => {
-                  navigate("/dashboard");
-                  setIsOpen(false);
-                }}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
-              >
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                <span>Go to Dashboard</span>
-              </button>
-            )}
             <button
               onClick={() => {
                 navigate("/explore/profile");
@@ -165,7 +156,9 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
                 <Sun className="h-4 w-4 text-muted-foreground" />
               )}
               <span>Theme</span>
-              <span className="ml-auto text-xs text-muted-foreground capitalize">{theme}</span>
+              <span className="ml-auto text-xs text-muted-foreground capitalize">
+                {theme}
+              </span>
             </button>
             <button
               onClick={() => setIsOpen(false)}
@@ -191,4 +184,3 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
     </div>
   );
 }
-
